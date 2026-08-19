@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>SmartFlow Myanmar — ကွန်ဆိုးလ်</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#090c12;
+    --panel:#0f1826;
+    --panel-2:#131f30;
+    --line:#1c2a3d;
+    --deep:#0a2540;
+    --cyan:#00d2ff;
+    --cyan-dim:rgba(0,210,255,0.14);
+    --text:#e8eef5;
+    --muted:#7b8aa0;
+    --muted-2:#4c5a6e;
+    --ok:#3ee08a;
+    --warn:#ffb84d;
+    --danger:#ff5d7a;
+    --radius:14px;
+    --font-display:'Space Grotesk', 'Noto Sans Myanmar', sans-serif;
+    --font-body:'Inter', 'Noto Sans Myanmar', sans-serif;
+    --font-mono:'JetBrains Mono', 'Noto Sans Myanmar', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--cyan-dim); color:var(--cyan);}
+  a{color:inherit;}
+  button{font-family:inherit; cursor:pointer;}
+  :focus-visible{outline:2px solid var(--cyan); outline-offset:2px;}
+
+  /* ---------- LOGIN ---------- */
+  #login-screen{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(10,37,64,0.9), transparent 55%),
+      radial-gradient(circle at 80% 75%, rgba(0,210,255,0.08), transparent 45%),
+      var(--bg);
+  }
+  #flow-canvas{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0.55;
+  }
+  .login-card{
+    position:relative;
+    z-index:2;
+    width:100%;
+    max-width:380px;
+    background:rgba(15,24,38,0.72);
+    backdrop-filter:blur(18px);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:36px 30px 30px;
+    animation:rise .6s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
+  .brand-mark{
+    display:flex; align-items:center; gap:10px; margin-bottom:28px;
+  }
+  .brand-mark svg{width:30px; height:30px; flex-shrink:0;}
+  .brand-mark span{
+    font-family:var(--font-display); font-weight:600; font-size:16.5px; letter-spacing:0.01em;
+  }
+  .brand-mark .sub{
+    display:block; font-family:var(--font-mono); font-size:10px; color:var(--muted-2); letter-spacing:0.08em; text-transform:uppercase; margin-top:1px;
+  }
+  .login-card h1{
+    font-family:var(--font-display); font-weight:600; font-size:23px; margin-bottom:6px; letter-spacing:-0.01em;
+  }
+  .login-card p.lede{
+    color:var(--muted); font-size:13.5px; margin-bottom:26px; line-height:1.5;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:11.5px; color:var(--muted); margin-bottom:7px; letter-spacing:0.02em;
+  }
+  .field input{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:12px 13px; color:var(--text); font-size:14.5px; font-family:var(--font-body);
+    transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--cyan);}
+  .field input::placeholder{color:var(--muted-2);}
+  .login-btn{
+    width:100%; padding:13px; border:none; border-radius:10px; margin-top:6px;
+    background:linear-gradient(90deg, var(--cyan), #4de3ff);
+    color:#03141f; font-weight:600; font-size:14.5px; letter-spacing:0.01em;
+    box-shadow:0 8px 24px -8px rgba(0,210,255,0.5);
+    transition:transform .15s, box-shadow .15s;
+  }
+  .login-btn:hover{transform:translateY(-1px); box-shadow:0 10px 28px -6px rgba(0,210,255,0.6);}
+  .login-btn:active{transform:translateY(0);}
+  .demo-note{
+    margin-top:18px; font-size:11.5px; color:var(--muted-2); text-align:center; line-height:1.5;
+  }
+  .demo-note b{color:var(--muted);}
+  .login-err{
+    font-size:12px; color:var(--danger); margin:-6px 0 14px; display:none;
+  }
+  .auth-switch{margin-top:16px; text-align:center; color:var(--muted); font-size:12px;}
+  .auth-switch button{background:none; border:none; color:var(--cyan); font-size:12px; padding:0 3px;}
+  .auth-switch button:hover{text-decoration:underline;}
+
+  /* ---------- APP SHELL ---------- */
+  #app{display:none; min-height:100vh;}
+  .shell{display:flex; min-height:100vh;}
+
+  .sidebar{
+    width:224px; flex-shrink:0; background:var(--panel);
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column;
+    padding:22px 14px;
+    position:sticky; top:0; height:100vh;
+  }
+  .sidebar .brand-mark{padding:0 8px; margin-bottom:30px;}
+  .nav-group{margin-bottom:22px;}
+  .nav-label{
+    font-family:var(--font-mono); font-size:10px; color:var(--muted-2);
+    text-transform:uppercase; letter-spacing:0.1em; padding:0 12px; margin-bottom:8px;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:11px;
+    padding:9px 12px; border-radius:9px; color:var(--muted); font-size:13.5px; font-weight:500;
+    margin-bottom:2px; border:none; background:none; width:100%; text-align:left;
+  }
+  .nav-item svg{width:17px; height:17px; flex-shrink:0; opacity:0.85;}
+  .nav-item:hover{background:var(--panel-2); color:var(--text);}
+  .nav-item.active{background:var(--cyan-dim); color:var(--cyan);}
+  .nav-item .badge{
+    margin-left:auto; background:var(--panel-2); color:var(--muted); font-size:10.5px;
+    padding:1px 7px; border-radius:20px; font-family:var(--font-mono);
+  }
+  .nav-item.active .badge{background:rgba(0,210,255,0.2); color:var(--cyan);}
+  .sidebar-foot{
+    margin-top:auto; padding:12px; border-top:1px solid var(--line);
+    display:flex; align-items:center; gap:10px;
+  }
+  .avatar{
+    width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,var(--deep),var(--cyan));
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;
+  }
+  .sidebar-foot .who{line-height:1.3;}
+  .sidebar-foot .who .name{font-size:12.5px; font-weight:600;}
+  .sidebar-foot .who .role{font-size:10.5px; color:var(--muted-2);}
+  .logout-btn{
+    margin-left:auto; background:none; border:none; color:var(--muted-2); padding:6px;
+    border-radius:7px; display:flex;
+  }
+  .logout-btn:hover{color:var(--danger); background:var(--panel-2);}
+  .logout-btn svg{width:15px; height:15px;}
+
+  .main{flex:1; min-width:0;}
+  .topbar{
+    display:flex; align-items:center; gap:16px;
+    padding:16px 28px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:rgba(9,12,18,0.85); backdrop-filter:blur(10px); z-index:5;
+  }
+  .topbar h2{font-family:var(--font-display); font-size:18px; font-weight:600;}
+  .search-box{
+    flex:1; max-width:320px; margin-left:auto;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:9px;
+    display:flex; align-items:center; gap:8px; padding:8px 12px;
+  }
+  .search-box svg{width:14px; height:14px; color:var(--muted-2); flex-shrink:0;}
+  .search-box input{background:none; border:none; color:var(--text); font-size:13px; width:100%;}
+  .search-box input::placeholder{color:var(--muted-2);}
+  .live-dot{
+    display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ok); font-family:var(--font-mono);
+    background:rgba(62,224,138,0.1); border:1px solid rgba(62,224,138,0.25); padding:5px 10px; border-radius:20px;
+  }
+  .live-dot::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--ok); animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+
+  .content{padding:26px 28px 60px; max-width:1180px;}
+  .view{display:none;}
+  .view.active{display:block; animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  .stat-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:26px;
+  }
+  .stat-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px;
+  }
+  .stat-card .label{font-size:12px; color:var(--muted); margin-bottom:10px;}
+  .stat-card .value{font-family:var(--font-display); font-size:26px; font-weight:600;}
+  .stat-card .delta{font-size:11.5px; margin-top:6px; font-family:var(--font-mono);}
+  .delta.up{color:var(--ok);}
+  .delta.warn{color:var(--warn);}
+
+  /* ---------- ANALYTICS ---------- */
+  .analytics-grid{display:grid; grid-template-columns:1.15fr 1fr; gap:18px; margin-bottom:22px;}
+  .chart-body{padding:18px 20px 20px;}
+  .status-chart{display:flex; align-items:center; gap:22px; min-height:190px;}
+  .donut-wrap{position:relative; width:154px; height:154px; flex:0 0 154px;}
+  .donut-chart{width:154px; height:154px; transform:rotate(-90deg);}
+  .donut-chart circle{fill:none; stroke-width:18;}
+  .donut-track{stroke:var(--panel-2);}
+  .donut-segment{transition:stroke-dasharray .45s ease, stroke-dashoffset .45s ease;}
+  .donut-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;}
+  .donut-center strong{font-family:var(--font-display); font-size:25px;}
+  .donut-center span{font-size:10px; color:var(--muted);}
+  .legend{display:flex; flex-direction:column; gap:10px; flex:1;}
+  .legend-row{display:flex; align-items:center; gap:8px; font-size:12px;}
+  .legend-dot{width:9px; height:9px; border-radius:50%; flex:0 0 9px;}
+  .legend-row .legend-label{flex:1; color:var(--muted);}
+  .legend-row strong{font-family:var(--font-mono); font-size:11px;}
+  .bar-chart{display:flex; flex-direction:column; gap:15px; padding-top:4px;}
+  .bar-row{display:grid; grid-template-columns:90px 1fr 42px; align-items:center; gap:10px; font-size:12px;}
+  .bar-label{color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .bar-track{height:9px; background:var(--panel-2); border-radius:20px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:20px; min-width:0; transition:width .45s ease;}
+  .bar-value{font-family:var(--font-mono); font-size:11px; text-align:right; color:var(--text);}
+  .modal-backdrop{display:none; position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.65); align-items:center; justify-content:center; padding:20px;}
+  .modal-backdrop.show{display:flex;}
+  .modal{width:100%; max-width:520px; background:var(--panel); border:1px solid var(--line); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,.5); overflow:hidden; animation:rise .25s ease;}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; padding:17px 20px; border-bottom:1px solid var(--line);}
+  .modal-head h3{font-family:var(--font-display); font-size:16px;}
+  .modal-close{background:none; border:none; color:var(--muted); padding:4px; font-size:22px; line-height:1;}
+  .modal-close:hover{color:var(--danger);}
+  .modal-body{padding:20px;}
+  .modal-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .modal-field label{display:block; color:var(--muted); font-size:11px; margin-bottom:6px;}
+  .modal-field input,.modal-field select{width:100%; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:10px; color:var(--text); font:inherit; font-size:13px;}
+  .modal-field.full{grid-column:1/-1;}
+  .modal-foot{display:flex; justify-content:flex-end; gap:8px; padding:14px 20px; border-top:1px solid var(--line);}
+  .btn-secondary{background:var(--panel-2); color:var(--text); border:1px solid var(--line); padding:9px 16px; border-radius:9px; font-weight:600; font-size:13px;}
+  .btn-secondary:hover{border-color:var(--cyan); color:var(--cyan);}
+  .toast{position:fixed; right:22px; bottom:22px; z-index:60; background:var(--panel-2); border:1px solid var(--cyan); color:var(--text); padding:12px 16px; border-radius:9px; font-size:12px; box-shadow:0 10px 30px rgba(0,0,0,.35); opacity:0; transform:translateY(8px); pointer-events:none; transition:all .25s;}
+  .toast.show{opacity:1; transform:translateY(0);}
+  @media (max-width:880px){.analytics-grid{grid-template-columns:1fr;}.status-chart{justify-content:center;}.modal-grid{grid-template-columns:1fr;}.modal-field.full{grid-column:auto;}}
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    margin-bottom:22px; overflow:hidden;
+  }
+  .panel-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 20px; border-bottom:1px solid var(--line);
+  }
+  .panel-head h3{font-family:var(--font-display); font-size:15px; font-weight:600;}
+  .panel-head p{font-size:11.5px; color:var(--muted-2); margin-top:3px;}
+
+  /* Flow pipeline - signature element */
+  .flow-strip{padding:20px 22px 22px; overflow-x:auto;}
+  .flow-track{
+    position:relative; display:flex; justify-content:space-between; min-width:640px;
+    padding-top:6px;
+  }
+  .flow-track::before{
+    content:''; position:absolute; top:15px; left:16px; right:16px; height:2px;
+    background:var(--line);
+  }
+  .flow-track .flow-fill{
+    position:absolute; top:15px; left:16px; height:2px;
+    background:linear-gradient(90deg, var(--cyan), #4de3ff);
+    width:0%; transition:width 1.4s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 0 10px rgba(0,210,255,0.6);
+  }
+  .flow-step{position:relative; display:flex; flex-direction:column; align-items:center; width:110px;}
+  .flow-step .dot{
+    width:32px; height:32px; border-radius:50%; background:var(--panel-2); border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:13px; z-index:2; margin-bottom:10px;
+    transition:all .4s;
+  }
+  .flow-step.done .dot{background:var(--cyan-dim); border-color:var(--cyan); color:var(--cyan);}
+  .flow-step .name{font-size:11.5px; font-weight:600; text-align:center;}
+  .flow-step .desc{font-size:10px; color:var(--muted-2); text-align:center; margin-top:2px; line-height:1.3;}
+
+  .panel{overflow-x:auto;}
+  table{width:100%; min-width:680px; border-collapse:collapse;}
+  .panel .list-simple{min-width:0;}
+  thead th{
+    text-align:left; font-size:11px; color:var(--muted-2); font-weight:500; text-transform:uppercase;
+    letter-spacing:0.05em; padding:12px 20px; border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:13px 20px; font-size:13px; border-bottom:1px solid var(--line);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr{transition:background .15s;}
+  tbody tr:hover{background:var(--panel-2);}
+  .oid{font-family:var(--font-mono); color:var(--muted); font-size:12px;}
+  .cust{font-weight:600;}
+  .cust .via{display:block; font-size:11px; color:var(--muted-2); font-weight:400; margin-top:1px;}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+    padding:4px 10px; border-radius:20px; font-family:var(--font-mono);
+  }
+  .pill.new{background:rgba(255,184,77,0.12); color:var(--warn);}
+  .pill.validated{background:rgba(0,210,255,0.12); color:var(--cyan);}
+  .pill.confirmed{background:rgba(62,224,138,0.12); color:var(--ok);}
+  .pill.delivered{background:rgba(123,138,160,0.14); color:var(--muted);}
+  .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+  .icon-btn{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:7px; padding:6px;
+    display:flex; color:var(--muted);
+  }
+  .icon-btn:hover{color:var(--cyan); border-color:var(--cyan);}
+  .icon-btn svg{width:13px; height:13px;}
+
+  .two-col{display:grid; grid-template-columns:1.5fr 1fr; gap:18px;}
+  .list-simple{padding:6px 0;}
+  .list-simple .item{
+    display:flex; align-items:center; gap:11px; padding:11px 20px; border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .list-simple .item:last-child{border-bottom:none;}
+  .list-simple .item .dotcolor{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .list-simple .item .txt{flex:1;}
+  .list-simple .item .time{font-size:11px; color:var(--muted-2); font-family:var(--font-mono);}
+
+  .empty-state{
+    padding:50px 20px; text-align:center; color:var(--muted);
+  }
+  .empty-state svg{width:36px; height:36px; margin-bottom:12px; opacity:0.4;}
+  .empty-state p{font-size:13px;}
+
+  .page-title-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .page-title-row h1{font-family:var(--font-display); font-size:20px; font-weight:600;}
+  .page-title-row p{font-size:12.5px; color:var(--muted); margin-top:3px;}
+  .btn-primary{
+    background:var(--cyan); color:#03141f; border:none; padding:9px 16px; border-radius:9px;
+    font-weight:600; font-size:13px;
+  }
+  .btn-primary:hover{background:#33dbff;}
+
+  @media (max-width:880px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .two-col{grid-template-columns:1fr;}
+    .sidebar{position:fixed; z-index:20; left:-240px; transition:left .25s; box-shadow:20px 0 40px rgba(0,0,0,0.4);}
+    .sidebar.open{left:0;}
+    .content{padding:20px 16px 60px;}
+    .topbar{padding:14px 16px;}
+    .search-box{display:none;}
+    .menu-toggle{display:flex !important;}
+  }
+  .menu-toggle{
+    display:none; background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:8px;
+    color:var(--text);
+  }
+  .menu-toggle svg{width:16px; height:16px;}
+  .scrim{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:15;}
+  .scrim.show{display:block;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login-screen">
+  <canvas id="flow-canvas"></canvas>
+  <div class="login-card">
+    <div class="brand-mark">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M4 22C9 22 9 10 16 10C23 10 23 22 28 22" stroke="#00d2ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="4" cy="22" r="2.4" fill="#00d2ff"/><circle cx="28" cy="22" r="2.4" fill="#0a2540" stroke="#00d2ff" stroke-width="1.5"/></svg>
+      <div><span>SmartFlow Myanmar</span><span class="sub">ကွန်ဆိုးလ်</span></div>
+    </div>
+    <h1 id="auth-title">ဝင်ရောက်ရန်</h1>
+    <p class="lede" id="auth-lede">အော်ဒါများ၊ လုပ်ငန်းစဉ်များနှင့် customer automation များကို တစ်နေရာတည်းတွင် စီမံခန့်ခွဲနိုင်ပါသည်။</p>
+    <div class="login-err" id="login-err">ဆက်လက်ရန် အကွက်နှစ်ခုစလုံးဖြည့်ပါ — ဒီမိုသာဖြစ်၍ မည်သည့်တန်ဖိုးမဆို အလုပ်လုပ်ပါသည်။</div>
+    <form id="login-form" novalidate>
+      <div class="field" id="name-field" style="display:none">
+        <label for="full-name">အမည်</label>
+        <input id="full-name" type="text" placeholder="အမည်အပြည့်အစုံ" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="email">အီးမေးလ်</label>
+        <input id="email" type="email" placeholder="you@business.com" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="pass">စကားဝှက်</label>
+        <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="auth-submit">ဝင်ရောက်ရန်</button>
+    </form>
+    <div class="auth-switch"><span id="auth-switch-text">အကောင့်မရှိသေးပါသလား။</span><button type="button" id="auth-switch-btn">အကောင့်ဖွင့်ရန်</button></div>
+    <p class="demo-note"><b>Supabase Auth</b> — သင့်အကောင့်ဖြင့် လုံခြုံစွာ ဝင်ရောက်ပါ။</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+<div class="shell">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand-mark">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M4 22C9 22 9 10 16 10C23 10 23 22 28 22" stroke="#00d2ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="4" cy="22" r="2.4" fill="#00d2ff"/><circle cx="28" cy="22" r="2.4" fill="#0a2540" stroke="#00d2ff" stroke-width="1.5"/></svg>
+      <div><span>SmartFlow</span><span class="sub">Myanmar</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">ခြုံငုံသုံးသပ်ချက်</div>
+      <button class="nav-item active" data-view="overview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        ခြုံငုံသုံးသပ်ချက်
+      </button>
+      <button class="nav-item" data-view="orders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        အော်ဒါများ <span class="badge" id="order-badge">0</span>
+      </button>
+      <button class="nav-item" data-view="workflows">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8 6h6a4 4 0 0 1 4 4v2"/></svg>
+        လုပ်ငန်းစဉ်များ
+      </button>
+      <button class="nav-item" data-view="customers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c1-3.6 4-5.6 7-5.6s6 2 7 5.6"/></svg>
+        Customer များ
+      </button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">စနစ်</div>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+        ဆက်တင်များ
+      </button>
+    </div>
+    <div class="sidebar-foot">
+      <div class="avatar" id="user-avatar">M</div>
+      <div class="who">
+        <div class="name" id="user-name">Myo Khaing</div>
+        <div class="role">အက်ဒမင်</div>
+      </div>
+      <button class="logout-btn" id="logout-btn" title="ထွက်ရန်">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="menu-toggle" id="menu-toggle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <h2 id="topbar-title">ခြုံငုံသုံးသပ်ချက်</h2>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" placeholder="အော်ဒါ၊ customer ရှာရန်…" id="search-input">
+      </div>
+      <div class="live-dot">တိုက်ရိုက်</div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div class="view active" id="view-overview">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">ယနေ့အော်ဒါများ</div><div class="value" id="stat-orders">—</div><div class="delta up">↑ မနေ့ကထက် ၁၈% မြင့်တက်</div></div>
+          <div class="stat-card"><div class="label">စစ်ဆေးရန်ကျန်</div><div class="value" id="stat-pending">—</div><div class="delta warn">အာရုံစိုက်ရန်လို</div></div>
+          <div class="stat-card"><div class="label">အလိုအလျောက်အတည်ပြုပြီး</div><div class="value" id="stat-auto">—</div><div class="delta up">အော်တိုမေးရှင်းနှုန်း ၉၂%</div></div>
+          <div class="stat-card"><div class="label">ဝင်ငွေ (ကျပ်)</div><div class="value" id="stat-rev">—</div><div class="delta up">↑ ဒီအပတ် ၁၂% မြင့်တက်</div></div>
+        </div>
+
+        <div class="analytics-grid">
+          <div class="panel">
+            <div class="panel-head"><div><h3>Order Status Analytics</h3><p>အော်ဒါအခြေအနေအလိုက် စုစုပေါင်းခွဲခြမ်းစိတ်ဖြာမှု</p></div></div>
+            <div class="chart-body status-chart">
+              <div class="donut-wrap"><svg class="donut-chart" viewBox="0 0 42 42"><circle class="donut-track" cx="21" cy="21" r="15.9155"></circle><circle id="donut-new" class="donut-segment" cx="21" cy="21" r="15.9155" stroke="#ffb84d"></circle><circle id="donut-validated" class="donut-segment" cx="21" cy="21" r="15.9155" stroke="#00d2ff"></circle><circle id="donut-confirmed" class="donut-segment" cx="21" cy="21" r="15.9155" stroke="#3ee08a"></circle><circle id="donut-delivered" class="donut-segment" cx="21" cy="21" r="15.9155" stroke="#7b8aa0"></circle></svg><div class="donut-center"><strong id="chart-total">0</strong><span>အော်ဒါ</span></div></div>
+              <div class="legend" id="status-legend"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h3>Channel Analytics</h3><p>Channel အလိုက် အော်ဒါအရေအတွက်</p></div></div>
+            <div class="chart-body"><div class="bar-chart" id="channel-chart"></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div><h3>အော်ဒါ အော်တိုမေးရှင်း လုပ်ငန်းစဉ်</h3><p>Messenger → AI ခွဲခြမ်းစိတ်ဖြာမှု → အတည်ပြုခြင်း → sheet → ပြက္ခဒိန် → အတည်ပြုချက်</p></div>
+          </div>
+          <div class="flow-strip">
+            <div class="flow-track" id="flow-track">
+              <div class="flow-fill" id="flow-fill"></div>
+              <div class="flow-step" data-i="0"><div class="dot">💬</div><div class="name">မက်ဆေ့ချ်ဝင်</div><div class="desc">Chat / Messenger</div></div>
+              <div class="flow-step" data-i="1"><div class="dot">✦</div><div class="name">AI ခွဲခြမ်းစိတ်ဖြာ</div><div class="desc">အော်ဒါအချက်အလက် ထုတ်ယူ</div></div>
+              <div class="flow-step" data-i="2"><div class="dot">✓</div><div class="name">အတည်ပြု</div><div class="desc">ကုန်ပစ္စည်း/စည်းမျဉ်း စစ်ဆေး</div></div>
+              <div class="flow-step" data-i="3"><div class="dot">▤</div><div class="name">မှတ်တမ်းတင်</div><div class="desc">Sheet / ဒေတာဘေ့စ်</div></div>
+              <div class="flow-step" data-i="4"><div class="dot">◔</div><div class="name">အချိန်ဇယားချ</div><div class="desc">ပြက္ခဒိန်အချိန်</div></div>
+              <div class="flow-step" data-i="5"><div class="dot">✔</div><div class="name">အတည်ပြု</div><div class="desc">customer ကိုအကြောင်းကြား</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><div><h3>လတ်တလော အော်ဒါများ</h3><p>Channel အားလုံးမှ လတ်ဆတ်သောလှုပ်ရှားမှုများ</p></div></div>
+            <div id="recent-orders-wrap"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div><h3>လှုပ်ရှားမှုမှတ်တမ်း</h3><p>စနစ်နှင့် အော်တိုမေးရှင်းဖြစ်ရပ်များ</p></div></div>
+            <div class="list-simple" id="activity-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="view" id="view-orders">
+        <div class="page-title-row">
+          <div><h1>အော်ဒါများ</h1><p>Messenger၊ Viber နှင့် ဝဘ်ဆိုက် channel များမှ ဝင်လာသော အော်ဒါအားလုံး။</p></div>
+          <button class="btn-primary" id="new-order-btn">+ အော်ဒါအသစ်</button>
+        </div>
+        <div class="panel" id="orders-table-wrap"></div>
+      </div>
+
+      <!-- WORKFLOWS -->
+      <div class="view" id="view-workflows">
+        <div class="page-title-row"><div><h1>လုပ်ငန်းစဉ်များ</h1><p>ဤလုပ်ငန်းအတွက် လက်ရှိလည်ပတ်နေသော အော်တိုမေးရှင်းများ။</p></div></div>
+        <div class="panel"><div class="list-simple" id="workflow-list"></div></div>
+      </div>
+
+      <!-- CUSTOMERS -->
+      <div class="view" id="view-customers">
+        <div class="page-title-row"><div><h1>Customer များ</h1><p>အော်တိုမေးရှင်း channel များမှတစ်ဆင့် အော်ဒါမှာယူဖူးသူများ။</p></div></div>
+        <div class="panel" id="customers-table-wrap"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view" id="view-settings">
+        <div class="page-title-row"><div><h1>ဆက်တင်များ</h1><p>ဤဒီမိုအတွက် ကွန်ဆိုးလ် နှစ်သက်ရာများ။</p></div></div>
+        <div class="panel">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+            <p>ဤဒီမိုတွင် ဆက်တင်များကို ချိတ်ဆက်မထားသေးပါ — integration၊ team အသုံးပြုခွင့်နှင့် channel များကို စီမံရန် backend ချိတ်ဆက်ပါ။</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</div>
+
+<div class="modal-backdrop" id="order-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modal-title">အော်ဒါအသစ်</h3><button class="modal-close" id="modal-close" aria-label="ပိတ်ရန်">×</button></div>
+    <form id="order-form">
+      <div class="modal-body"><div class="modal-grid">
+        <div class="modal-field"><label for="order-customer">Customer</label><input id="order-customer" required placeholder="အမည်"></div>
+        <div class="modal-field"><label for="order-channel">Channel</label><select id="order-channel"><option>Messenger</option><option>Viber</option><option>Website</option><option>Phone</option></select></div>
+        <div class="modal-field full"><label for="order-items">ပစ္စည်းများ</label><input id="order-items" required placeholder="ဥပမာ - 2x Set Menu A"></div>
+        <div class="modal-field"><label for="order-amount">ပမာဏ (ကျပ်)</label><input id="order-amount" type="number" min="0" required placeholder="24000"></div>
+        <div class="modal-field"><label for="order-status">အခြေအနေ</label><select id="order-status"><option value="new">အသစ်</option><option value="validated">စစ်ဆေးပြီး</option><option value="confirmed">အတည်ပြုပြီး</option><option value="delivered">ပို့ပြီး</option></select></div>
+      </div></div>
+      <div class="modal-foot"><button type="button" class="btn-secondary" id="modal-cancel">မလုပ်တော့ပါ</button><button type="submit" class="btn-primary">သိမ်းမည်</button></div>
+    </form>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- Backend config ----------
+// Paste your deployed Google Apps Script Web App URL below.
+// Leave it empty ('') to keep running in demo mode with sample data.
+const CONFIG = {
+  SUPABASE_URL: 'https://lutxlvhmioyfuepwbakh.supabase.co',
+  SUPABASE_KEY: 'sb_publishable_y46xtYR0A6V4ICPlpRsMjw_MDqdfg1E',
+  SYNC_INTERVAL_MS: 15000
+};
+
+// ---------- Demo fallback data (used only if CONFIG.SUPABASE_URL is empty) ----------
+const DEMO_ORDERS = [
+  {id:'ORD-2481', customer:'Thiri Wai', via:'Messenger', items:'2x Set Menu A', amount:24000, status:'confirmed', stage:6, time:'9:14 AM'},
+  {id:'ORD-2480', customer:'Kyaw Zin Oo', via:'Viber', items:'Birthday cake, 1kg', amount:38000, status:'validated', stage:3, time:'9:02 AM'},
+  {id:'ORD-2479', customer:'Hnin Ei Phyu', via:'Website', items:'3x Combo B, drinks', amount:31500, status:'new', stage:1, time:'8:47 AM'},
+  {id:'ORD-2478', customer:'Zaw Min Htet', via:'Messenger', items:'Family platter', amount:52000, status:'confirmed', stage:6, time:'8:30 AM'},
+  {id:'ORD-2477', customer:'Su Myat Noe', via:'Messenger', items:'1x Lunch set', amount:8500, status:'delivered', stage:6, time:'Yesterday'},
+  {id:'ORD-2476', customer:'Aung Kaung Myat', via:'Viber', items:'Catering, 20 pax', amount:210000, status:'validated', stage:4, time:'Yesterday'},
+  {id:'ORD-2475', customer:'Ei Shwe Sin', via:'Website', items:'2x Set Menu C', amount:19000, status:'delivered', stage:6, time:'Yesterday'},
+];
+let ORDERS = [];
+let CUSTOMERS = [];
+let syncTimer = null;
+let isSyncing = false;
+let lastRemoteSnapshot = '';
+let currentSession = null;
+let authMode = 'signin';
+
+const ACTIVITY = [
+  {c:'#3ee08a', txt:'ORD-2481 ကို အလိုအလျောက်အတည်ပြုပြီး', time:'၂ မိနစ်က'},
+  {c:'#00d2ff', txt:'Messenger မှ အော်ဒါအသစ်ကို AI ခွဲခြမ်းစိတ်ဖြာပြီး', time:'၁၁ မိနစ်က'},
+  {c:'#ffb84d', txt:'ORD-2480 ကို ကုန်ပစ္စည်းလက်ဖြင့်စစ်ဆေးရန် အမှတ်အသားပြုထား', time:'၂၄ မိနစ်က'},
+  {c:'#00d2ff', txt:'ပြက္ခဒိန်အချိန်ချထား — catering, ၂၀ ယောက်', time:'၁ နာရီက'},
+  {c:'#3ee08a', txt:'နေ့စဉ်အော်ဒါစာရင်းကို Google Sheets သို့ စင့်ခ်ပြီး', time:'၂ နာရီက'},
+];
+const WORKFLOWS = [
+  {c:'#3ee08a', txt:'AI အော်ဒါအော်တိုမေးရှင်း — Messenger', time:'လက်ရှိလည်ပတ်နေ'},
+  {c:'#3ee08a', txt:'Customer အတည်ပြုချက် အကြောင်းကြားစာများ', time:'လက်ရှိလည်ပတ်နေ'},
+  {c:'#00d2ff', txt:'Booking နှင့် appointment စင့်ခ်ခြင်း', time:'လက်ရှိလည်ပတ်နေ'},
+  {c:'#7b8aa0', txt:'Lead စီမံခန့်ခွဲမှု အော်တိုမေးရှင်း', time:'ခေတ္တရပ်ထား'},
+];
+
+const pillLabel = {new:'အသစ်', validated:'စစ်ဆေးပြီး', confirmed:'အတည်ပြုပြီး', delivered:'ပို့ပြီး'};
+
+function fmtMMK(n){ return Number(n||0).toLocaleString('en-US') + ' K'; }
+
+function buildCustomersFromOrders(orders){
+  const map = {};
+  orders.forEach(o=>{
+    if(!map[o.customer]) map[o.customer] = {name:o.customer, via:o.via, orders:0, spent:0, last:o.time};
+    map[o.customer].orders += 1;
+    map[o.customer].spent += Number(o.amount||0);
+  });
+  return Object.values(map);
+}
+
+// ---------- Data loading and Supabase sync ----------
+function supabaseHeaders(extra={}){
+  const token = currentSession?.access_token || CONFIG.SUPABASE_KEY;
+  return {'apikey':CONFIG.SUPABASE_KEY, 'Authorization':`Bearer ${token}`, ...extra};
+}
+async function supabaseFetch(path, options={}){
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/${path}`, {cache:'no-store', ...options, headers:supabaseHeaders(options.headers||{})});
+  if(!res.ok){ const detail = await res.text(); throw new Error(`Supabase request failed: ${res.status} ${detail}`); }
+  const text = await res.text(); return text ? JSON.parse(text) : [];
+}
+async function apiGetOrders(){
+  const [rows, customers] = await Promise.all([
+    supabaseFetch('orders?select=*&order=created_at.desc'),
+    supabaseFetch('customers?select=id,name')
+  ]);
+  const customerMap = Object.fromEntries(customers.map(c=>[c.id,c]));
+  return rows.map(o=>{
+    const customer = customerMap[o.customer_id] || {};
+    const status = pillLabel[o.status] ? o.status : 'new';
+    return {id:o.id, dbId:o.id, customer:customer.name || 'မသိရသေးသော Customer', via:o.channel || 'Website', items:o.notes || '—', amount:Number(o.total_amount)||0, status, stage:({new:1,validated:3,confirmed:5,delivered:6})[status], time:o.created_at ? new Date(o.created_at).toLocaleString('my-MM',{hour:'numeric',minute:'2-digit'}) : '—', customerId:o.customer_id};
+  });
+}
+async function findOrCreateCustomer(name, channel){
+  const existing = await supabaseFetch(`customers?select=id&name=eq.${encodeURIComponent(name)}&limit=1`);
+  if(existing[0]?.id) return existing[0].id;
+  const created = await supabaseFetch('customers', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({name})});
+  return created[0]?.id;
+}
+async function apiPost(action, payload={}){
+  if(action==='createOrder'){
+    const o = payload.order, customerId = await findOrCreateCustomer(o.customer, o.via);
+    return supabaseFetch('orders', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({order_number:`ORD-${Date.now().toString().slice(-6)}`, customer_id:customerId, channel:o.via, status:o.status, total_amount:o.amount, notes:o.items})});
+  }
+  if(action==='updateOrder'){
+    const o = payload.order;
+    return supabaseFetch(`orders?id=eq.${encodeURIComponent(payload.id)}`, {method:'PATCH', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({channel:o.via,status:o.status,total_amount:o.amount,notes:o.items})});
+  }
+  if(action==='advanceOrder'){
+    const order = ORDERS.find(o=>o.id===payload.id), status = nextStage(order?.status);
+    return supabaseFetch(`orders?id=eq.${encodeURIComponent(payload.id)}`, {method:'PATCH', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({status})});
+  }
+  throw new Error('Unknown Supabase action: ' + action);
+}
+async function loadData(){
+  if(!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY){
+    ORDERS = restoreOrders() || DEMO_ORDERS.map(o=>({...o}));
+    CUSTOMERS = buildCustomersFromOrders(ORDERS);
+    renderAll();
+    return;
+  }
+  try{
+    ORDERS = await apiGetOrders();
+    CUSTOMERS = buildCustomersFromOrders(ORDERS);
+    lastRemoteSnapshot = JSON.stringify(ORDERS);
+  }catch(err){
+    console.error('Failed to load from Sheet, falling back to demo data', err);
+    ORDERS = DEMO_ORDERS.map(o=>({...o}));
+    CUSTOMERS = buildCustomersFromOrders(ORDERS);
+    showToast('Supabase ဖတ်၍မရသေးပါ — sample data ဖြင့် ပြထားသည်။');
+  }
+  renderAll();
+  startRealtimeSync();
+}
+function startRealtimeSync(){
+  if(!CONFIG.SUPABASE_URL || syncTimer) return;
+  syncTimer = setInterval(syncFromSheet, CONFIG.SYNC_INTERVAL_MS);
+}
+async function syncFromSheet(){
+  if(!CONFIG.SUPABASE_URL || isSyncing || document.hidden) return;
+  isSyncing = true;
+  try{
+    const incoming = await apiGetOrders();
+    const snapshot = JSON.stringify(incoming);
+    if(snapshot !== lastRemoteSnapshot){
+      ORDERS = incoming; CUSTOMERS = buildCustomersFromOrders(ORDERS); lastRemoteSnapshot = snapshot; renderAll(); showToast('Supabase မှ data အသစ် sync လုပ်ပြီးပါပြီ။');
+    }
+  }catch(err){ console.warn('Auto-sync failed', err); }
+  finally{ isSyncing = false; }
+}
+
+function renderAll(){
+  renderOverview(); renderOrdersTable(); renderCustomers(); renderWorkflows();
+}
+
+
+function persistOrders(){
+  try{ localStorage.setItem('smartflow-orders', JSON.stringify(ORDERS)); }catch(e){ console.warn('Local storage unavailable', e); }
+}
+function restoreOrders(){
+  try{ const saved = localStorage.getItem('smartflow-orders'); if(saved){ const parsed = JSON.parse(saved); if(Array.isArray(parsed)) return parsed; } }catch(e){ console.warn('Could not restore orders', e); }
+  return null;
+}
+function showToast(message){
+  const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show');
+  clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=>toast.classList.remove('show'), 2400);
+}
+function statusCounts(){
+  return ['new','validated','confirmed','delivered'].reduce((out, key)=>{ out[key] = ORDERS.filter(o=>o.status===key).length; return out; }, {});
+}
+function renderAnalytics(){
+  const counts = statusCounts(), total = ORDERS.length || 0;
+  document.getElementById('chart-total').textContent = total;
+  const keys = ['new','validated','confirmed','delivered'];
+  const colors = {new:'#ffb84d', validated:'#00d2ff', confirmed:'#3ee08a', delivered:'#7b8aa0'};
+  let offset = 0;
+  keys.forEach(key=>{
+    const pct = total ? (counts[key] / total) * 100 : 0;
+    const seg = document.getElementById('donut-'+key);
+    seg.style.strokeDasharray = `${pct} ${100-pct}`; seg.style.strokeDashoffset = `${-offset}`; offset += pct;
+  });
+  document.getElementById('status-legend').innerHTML = keys.map(key=>`<div class="legend-row"><span class="legend-dot" style="background:${colors[key]}"></span><span class="legend-label">${pillLabel[key]}</span><strong>${counts[key]} (${total ? Math.round(counts[key]/total*100) : 0}%)</strong></div>`).join('');
+  const channels = {}; ORDERS.forEach(o=>{ channels[o.via] = (channels[o.via]||0)+1; });
+  const channelEntries = Object.entries(channels).sort((a,b)=>b[1]-a[1]); const max = channelEntries[0]?.[1] || 1;
+  document.getElementById('channel-chart').innerHTML = channelEntries.length ? channelEntries.map(([name,count])=>`<div class="bar-row"><span class="bar-label">${name}</span><span class="bar-track"><span class="bar-fill" style="width:${count/max*100}%;background:var(--cyan)"></span></span><span class="bar-value">${count}</span></div>`).join('') : '<div class="empty-state"><p>ဒေတာမရှိသေးပါ။</p></div>';
+}
+function getFilteredOrders(){
+  const query = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+  if(!query) return ORDERS;
+  return ORDERS.filter(o => [o.id,o.customer,o.via,o.items,o.status,pillLabel[o.status]].some(v => String(v||'').toLowerCase().includes(query)));
+}
+function nextStage(status){ return ({new:'validated', validated:'confirmed', confirmed:'delivered', delivered:'delivered'})[status] || 'new'; }
+async function advanceOrder(id){
+  const order = ORDERS.find(o=>o.id===id); if(!order || order.status==='delivered'){ showToast('ဤအော်ဒါသည် ပို့ပြီးဖြစ်ပါသည်။'); return; }
+  const status = nextStage(order.status), stage = ({new:1, validated:3, confirmed:5, delivered:6})[status];
+  if(CONFIG.SUPABASE_URL){
+    try{ await apiPost('advanceOrder', {id}); await refreshAfterWrite(); showToast(`${id} ကို Supabase တွင် ${pillLabel[status]} အဖြစ် ပြောင်းပြီးပါပြီ။`); }
+    catch(err){ console.error(err); showToast('Supabase သို့ status သိမ်း၍မရပါ။ RLS policy ကို စစ်ဆေးပါ။'); }
+  } else {
+    order.status = status; order.stage = stage; CUSTOMERS = buildCustomersFromOrders(ORDERS); persistOrders(); renderAll(); showToast(`${order.id} ကို ${pillLabel[order.status]} အဖြစ် ပြောင်းပြီးပါပြီ။`);
+  }
+}
+async function refreshAfterWrite(){
+  if(CONFIG.SUPABASE_URL){ ORDERS = await apiGetOrders(); CUSTOMERS = buildCustomersFromOrders(ORDERS); lastRemoteSnapshot = JSON.stringify(ORDERS); renderAll(); }
+  else { CUSTOMERS = buildCustomersFromOrders(ORDERS); persistOrders(); renderAll(); }
+}
+function openOrderModal(order){
+  document.getElementById('order-modal').classList.add('show'); document.getElementById('order-form').dataset.editId = order?.id || '';
+  document.getElementById('modal-title').textContent = order ? 'အော်ဒါပြင်ဆင်ရန်' : 'အော်ဒါအသစ်';
+  document.getElementById('order-customer').value = order?.customer || ''; document.getElementById('order-channel').value = order?.via || 'Messenger'; document.getElementById('order-items').value = order?.items || ''; document.getElementById('order-amount').value = order?.amount || ''; document.getElementById('order-status').value = order?.status || 'new';
+  document.getElementById('order-customer').focus();
+}
+function closeOrderModal(){ document.getElementById('order-modal').classList.remove('show'); document.getElementById('order-form').reset(); }
+
+function renderOverview(){
+  document.getElementById('stat-orders').textContent = ORDERS.length;
+  document.getElementById('stat-pending').textContent = ORDERS.filter(o=>o.status==='new'||o.status==='validated').length;
+  document.getElementById('stat-auto').textContent = (ORDERS.length ? Math.round(ORDERS.filter(o=>o.status!=='new').length / ORDERS.length * 100) : 0) + '%';
+  document.getElementById('stat-rev').textContent = fmtMMK(ORDERS.reduce((s,o)=>s+o.amount,0));
+
+  renderAnalytics();
+  const recentWrap = document.getElementById('recent-orders-wrap');
+  recentWrap.innerHTML = '<table><tbody>' + getFilteredOrders().slice(0,5).map(o => `
+    <tr>
+      <td><span class="cust">${o.customer}<span class="via">${o.via} · ${o.time}</span></span></td>
+      <td><span class="pill ${o.status}">${pillLabel[o.status]}</span></td>
+      <td style="text-align:right; font-family:var(--font-mono); color:var(--muted);">${fmtMMK(o.amount)}</td>
+    </tr>`).join('') + '</tbody></table>';
+
+  document.getElementById('activity-list').innerHTML = ACTIVITY.map(a => `
+    <div class="item"><span class="dotcolor" style="background:${a.c}"></span><span class="txt">${a.txt}</span><span class="time">${a.time}</span></div>
+  `).join('');
+
+  document.getElementById('order-badge').textContent = ORDERS.filter(o=>o.status==='new').length;
+
+  // animate flow strip to reflect avg stage across active orders
+  const avgStage = ORDERS.length ? ORDERS.reduce((s,o)=>s+Number(o.stage||1),0) / ORDERS.length : 1;
+  const pct = Math.max(0, Math.min(100, ((avgStage-1)/5)*100));
+  requestAnimationFrame(()=>{
+    document.getElementById('flow-fill').style.width = pct + '%';
+    document.querySelectorAll('.flow-step').forEach(el=>{
+      el.classList.toggle('done', parseInt(el.dataset.i, 10) <= (avgStage-1));
+    });
+  });
+}
+
+function renderOrdersTable(){
+  const wrap = document.getElementById('orders-table-wrap');
+  const orders = getFilteredOrders();
+  if(!orders.length){ wrap.innerHTML = '<div class="empty-state"><p>အော်ဒါဒေတာ မတွေ့ပါ။</p></div>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>အော်ဒါ</th><th>Customer</th><th>ပစ္စည်းများ</th><th>Channel</th><th>အခြေအနေ</th><th style="text-align:right">ပမာဏ</th><th></th></tr></thead>
+    <tbody>${orders.map(o => `
+      <tr>
+        <td class="oid">${o.id}</td>
+        <td><span class="cust">${o.customer}<span class="via">${o.time}</span></span></td>
+        <td>${o.items}</td>
+        <td>${o.via}</td>
+        <td><span class="pill ${o.status}">${pillLabel[o.status]}</span></td>
+        <td style="text-align:right; font-family:var(--font-mono);">${fmtMMK(o.amount)}</td>
+        <td><div class="row-actions">
+          <button class="icon-btn view-order-btn" data-order-id="${o.id}" title="ကြည့်ရန်"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="icon-btn advance-order-btn" data-order-id="${o.id}" title="နောက်အဆင့်အဖြစ် သတ်မှတ်ရန်"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderCustomers(){
+  const wrap = document.getElementById('customers-table-wrap');
+  const query = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+  const customers = query ? CUSTOMERS.filter(c => [c.name,c.via].some(v => String(v||'').toLowerCase().includes(query))) : CUSTOMERS;
+  if(!customers.length){ wrap.innerHTML = '<div class="empty-state"><p>Customer ဒေတာ မတွေ့ပါ။</p></div>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Customer</th><th>Channel</th><th>အော်ဒါအရေအတွက်</th><th>စုစုပေါင်းကုန်ကျငွေ</th><th>နောက်ဆုံးအော်ဒါ</th></tr></thead>
+    <tbody>${customers.map(c => `
+      <tr>
+        <td class="cust">${c.name}</td>
+        <td>${c.via}</td>
+        <td>${c.orders}</td>
+        <td style="font-family:var(--font-mono);">${fmtMMK(c.spent)}</td>
+        <td style="color:var(--muted);">${c.last}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderWorkflows(){
+  document.getElementById('workflow-list').innerHTML = WORKFLOWS.map(w => `
+    <div class="item"><span class="dotcolor" style="background:${w.c}"></span><span class="txt">${w.txt}</span><span class="time">${w.time}</span></div>
+  `).join('');
+}
+
+// initial render happens after login (see login handler below)
+
+const views = {overview:'ခြုံငုံသုံးသပ်ချက်', orders:'အော်ဒါများ', workflows:'လုပ်ငန်းစဉ်များ', customers:'Customer များ', settings:'ဆက်တင်များ'};
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    const key = btn.dataset.view;
+    document.getElementById('view-'+key).classList.add('active');
+    document.getElementById('topbar-title').textContent = views[key];
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('scrim').classList.remove('show');
+  });
+});
+document.getElementById('menu-toggle').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('scrim').classList.add('show');
+});
+document.getElementById('scrim').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('scrim').classList.remove('show');
+});
+
+// ---------- Search and order actions ----------
+document.getElementById('search-input').addEventListener('input', ()=>{ renderOverview(); renderOrdersTable(); renderCustomers(); });
+document.getElementById('new-order-btn').addEventListener('click', ()=>openOrderModal());
+document.getElementById('modal-close').addEventListener('click', closeOrderModal);
+document.getElementById('modal-cancel').addEventListener('click', closeOrderModal);
+document.getElementById('order-modal').addEventListener('click', e=>{ if(e.target.id==='order-modal') closeOrderModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeOrderModal(); });
+document.getElementById('orders-table-wrap').addEventListener('click', e=>{
+  const view = e.target.closest('.view-order-btn'), advance = e.target.closest('.advance-order-btn');
+  if(view){ const order = ORDERS.find(o=>o.id===view.dataset.orderId); if(order) openOrderModal(order); }
+  if(advance) advanceOrder(advance.dataset.orderId);
+});
+document.getElementById('order-form').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const id = e.currentTarget.dataset.editId;
+  const status = document.getElementById('order-status').value;
+  const payload = {customer:document.getElementById('order-customer').value.trim(), via:document.getElementById('order-channel').value, items:document.getElementById('order-items').value.trim(), amount:Number(document.getElementById('order-amount').value)||0, status, stage:({new:1,validated:3,confirmed:5,delivered:6})[status], time:'ယခုလေးတင်'};
+  if(!payload.customer || !payload.items){ showToast('Customer နှင့် ပစ္စည်းအချက်အလက် ဖြည့်ပေးပါ။'); return; }
+  try{
+    if(CONFIG.SUPABASE_URL){
+      if(id) await apiPost('updateOrder', {id, order:payload});
+      else await apiPost('createOrder', {order:payload});
+      await refreshAfterWrite(); showToast(id ? `${id} ကို Supabase တွင် ပြင်ဆင်ပြီးပါပြီ။` : 'အော်ဒါအသစ်ကို Supabase တွင် သိမ်းပြီးပါပြီ။');
+    } else {
+      if(id){ const index = ORDERS.findIndex(o=>o.id===id); if(index>=0) ORDERS[index] = {...ORDERS[index], ...payload}; showToast(`${id} ကို ပြင်ဆင်ပြီးပါပြီ။`); }
+      else { const next = Math.max(0, ...ORDERS.map(o=>Number(String(o.id||'').replace(/\D/g,''))||0)) + 1; ORDERS.unshift({id:'ORD-'+next, ...payload}); showToast('အော်ဒါအသစ် သိမ်းပြီးပါပြီ။'); }
+      await refreshAfterWrite();
+    }
+    closeOrderModal();
+  }catch(err){ console.error(err); showToast('Supabase သို့ သိမ်း၍မရပါ — RLS policy နှင့် table columns ကို စစ်ဆေးပါ။'); }
+});
+
+// ---------- Supabase Auth ----------
+async function authRequest(path, options={}){
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/auth/v1/${path}`, { ...options, headers:{'apikey':CONFIG.SUPABASE_KEY,'Content-Type':'application/json',...(options.headers||{})} });
+  const text = await res.text();
+  let data = {}; try{ data = text ? JSON.parse(text) : {}; }catch(_){ data = {message:text}; }
+  if(!res.ok) throw new Error(data.msg || data.message || data.error_description || 'Auth request failed');
+  return data;
+}
+async function saveProfile(user, fullName){
+  if(!user?.id) return;
+  const existing = await supabaseFetch(`profiles?id=eq.${encodeURIComponent(user.id)}&select=id&limit=1`);
+  if(!existing.length){
+    await supabaseFetch('profiles', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=minimal'}, body:JSON.stringify({id:user.id,email:user.email,full_name:fullName || user.user_metadata?.full_name || user.email.split('@')[0],role:'admin',active:true})});
+  }
+}
+async function openApp(session, fallbackName){
+  currentSession = session; localStorage.setItem('smartflow-session', JSON.stringify(session));
+  let name = fallbackName || session?.user?.user_metadata?.full_name || session?.user?.email?.split('@')[0] || 'အက်ဒမင်';
+  try{ const profile = await supabaseFetch(`profiles?id=eq.${encodeURIComponent(session.user.id)}&select=full_name,role&limit=1`); name = profile[0]?.full_name || name; }catch(err){ console.warn('Profile read failed', err); }
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadData();
+}
+function setAuthMode(mode){
+  authMode = mode;
+  const signup = mode === 'signup';
+  document.getElementById('auth-title').textContent = signup ? 'အကောင့်ဖွင့်ရန်' : 'ဝင်ရောက်ရန်';
+  document.getElementById('auth-lede').textContent = signup ? 'SmartFlow Myanmar ကို အသုံးပြုရန် အကောင့်အသစ်ဖွင့်ပါ။' : 'အော်ဒါများ၊ လုပ်ငန်းစဉ်များနှင့် customer automation များကို စီမံခန့်ခွဲပါ။';
+  document.getElementById('name-field').style.display = signup ? 'block' : 'none';
+  document.getElementById('full-name').required = signup;
+  document.getElementById('auth-submit').textContent = signup ? 'အကောင့်ဖွင့်ရန်' : 'ဝင်ရောက်ရန်';
+  document.getElementById('auth-switch-text').textContent = signup ? 'အကောင့်ရှိပြီးသားလား။' : 'အကောင့်မရှိသေးပါသလား။';
+  document.getElementById('auth-switch-btn').textContent = signup ? 'ဝင်ရောက်ရန်' : 'အကောင့်ဖွင့်ရန်';
+}
+document.getElementById('auth-switch-btn').addEventListener('click', ()=>setAuthMode(authMode==='signin' ? 'signup' : 'signin'));
+document.getElementById('login-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim(), pass = document.getElementById('pass').value, fullName = document.getElementById('full-name').value.trim();
+  const errBox = document.getElementById('login-err'), submitBtn = document.getElementById('auth-submit');
+  errBox.style.display = 'none';
+  if(!email || !pass || (authMode==='signup' && !fullName)){ errBox.textContent = 'လိုအပ်သော အကွက်များအားလုံး ဖြည့်ပေးပါ။'; errBox.style.display = 'block'; return; }
+  if(pass.length < 6){ errBox.textContent = 'စကားဝှက်သည် အနည်းဆုံး ၆ လုံး ရှိရပါမည်။'; errBox.style.display = 'block'; return; }
+  submitBtn.disabled = true; submitBtn.textContent = authMode==='signup' ? 'အကောင့်ဖွင့်နေသည်…' : 'ဝင်ရောက်နေသည်…';
+  try{
+    if(authMode==='signup'){
+      const data = await authRequest('signup', {method:'POST', body:JSON.stringify({email,password:pass,data:{full_name:fullName}})});
+      if(data.session){ await saveProfile(data.user, fullName); await openApp(data.session, fullName); }
+      else { errBox.textContent = 'အကောင့်ဖွင့်ပြီးပါပြီ။ Email ထဲရှိ confirmation link ကို နှိပ်ပြီးနောက် ဝင်ရောက်ပါ။'; errBox.style.color = 'var(--ok)'; errBox.style.display = 'block'; setAuthMode('signin'); }
+    } else {
+      const data = await authRequest('token?grant_type=password', {method:'POST', body:JSON.stringify({email,password:pass})});
+      await saveProfile(data.user); await openApp(data.session);
+    }
+  }catch(err){ errBox.style.color = 'var(--danger)'; errBox.textContent = err.message || 'Auth ချိတ်ဆက်၍မရပါ။'; errBox.style.display = 'block'; }
+  finally{ submitBtn.disabled = false; submitBtn.textContent = authMode==='signup' ? 'အကောင့်ဖွင့်ရန်' : 'ဝင်ရောက်ရန်'; }
+});
+document.getElementById('logout-btn').addEventListener('click', async ()=>{
+  try{ if(currentSession) await authRequest('logout', {method:'POST', headers:{'Authorization':`Bearer ${currentSession.access_token}`}}); }catch(err){ console.warn('Logout failed', err); }
+  currentSession = null; localStorage.removeItem('smartflow-session');
+  document.getElementById('app').style.display = 'none'; document.getElementById('login-screen').style.display = 'flex'; document.getElementById('login-form').reset(); document.getElementById('login-err').style.display = 'none'; setAuthMode('signin');
+});
+(async function restoreAuthSession(){
+  try{ const saved = JSON.parse(localStorage.getItem('smartflow-session') || 'null'); if(saved?.access_token && saved?.user) await openApp(saved); }catch(err){ localStorage.removeItem('smartflow-session'); }
+})();
+
+// ---------- Ambient flow canvas on login ----------
+(function(){
+  const canvas = document.getElementById('flow-canvas');
+  const ctx = canvas.getContext('2d');
+  let w,h,t=0;
+  function resize(){ w = canvas.width = canvas.offsetWidth; h = canvas.height = canvas.offsetHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(let i=0;i<4;i++){
+      const yBase = h*(0.15 + i*0.22);
+      ctx.beginPath();
+      ctx.moveTo(0, yBase);
+      for(let x=0;x<=w;x+=14){
+        const y = yBase + Math.sin((x*0.006) + t*0.0006 + i*1.4) * (24 + i*6);
+        ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle = `rgba(0,210,255,${0.05 + i*0.02})`;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    }
+    t += 16;
+    if(!reduce) requestAnimationFrame(draw); 
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
