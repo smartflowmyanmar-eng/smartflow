@@ -948,7 +948,8 @@ document.getElementById('login-form').addEventListener('submit', async function(
       else { errBox.textContent = 'အကောင့်ဖွင့်ပြီးပါပြီ။ Email ထဲရှိ confirmation link ကို နှိပ်ပြီးနောက် ဝင်ရောက်ပါ။'; errBox.style.color = 'var(--ok)'; errBox.style.display = 'block'; setAuthMode('signin'); }
     } else {
       const data = await authRequest('token?grant_type=password', {method:'POST', body:JSON.stringify({email,password:pass})});
-      currentSession = data.session; await saveProfile(data.user); await openApp(data.session);
+      const session = data.session || {access_token:data.access_token, refresh_token:data.refresh_token, expires_in:data.expires_in, user:data.user};
+      currentSession = session; await saveProfile(data.user); await openApp(session);
     }
   }catch(err){ errBox.style.color = 'var(--danger)'; errBox.textContent = err.message || 'Auth ချိတ်ဆက်၍မရပါ။'; errBox.style.display = 'block'; }
   finally{ submitBtn.disabled = false; submitBtn.textContent = authMode==='signup' ? 'အကောင့်ဖွင့်ရန်' : 'ဝင်ရောက်ရန်'; }
