@@ -945,13 +945,24 @@ document.getElementById('login-form').addEventListener('submit', async function(
     if(authMode==='signup'){
       const data = await authRequest('signup', {method:'POST', body:JSON.stringify({email,password:pass,data:{full_name:fullName},options:{emailRedirectTo:'https://smartflowmyanmar-eng.github.io/smartflow/'}})});
       if(data.session){ currentSession = data.session; await saveProfile(data.user, fullName); await openApp(data.session, fullName); }
-      else { errBox.textContent = 'အကောင့်ဖွင့်ပြီးပါပြီ။ Email ထဲရှိ confirmation link ကို နှိပ်ပြီးနောက် ဝင်ရောက်ပါ။'; errBox.style.color = 'var(--ok)'; errBox.style.display = 'block'; setAuthMode('signin'); }
+      else { errBox.textContent = 'အကောင့်ဖွင့်ရန် တောင်းဆိုမှုကို လက်ခံထားသော်လည်း confirmation email မပို့နိုင်သေးပါ။ Email မရောက်မချင်း အကောင့်အောင်မြင်ပြီဟု မယူဆပါနှင့်။'; errBox.style.color = 'var(--warn)'; errBox.style.display = 'block'; }
     } else {
       const data = await authRequest('token?grant_type=password', {method:'POST', body:JSON.stringify({email,password:pass})});
       const session = data.session || {access_token:data.access_token, refresh_token:data.refresh_token, expires_in:data.expires_in, user:data.user};
       currentSession = session; await saveProfile(data.user); await openApp(session);
     }
-  }catch(err){ errBox.style.color = 'var(--danger)'; errBox.textContent = err.message || 'Auth ချိတ်ဆက်၍မရပါ။'; errBox.style.display = 'block'; }
+  }catch(err){
+    const authError = String(err?.message || 'Auth ချိတ်ဆက်၍မရပါ။');
+    const normalized = authError.toLowerCase();
+    if(normalized.includes('rate limit') || normalized.includes('too many requests') || normalized.includes('email rate')){
+      errBox.textContent = 'Email ပို့နိုင်မှုကန့်သတ်ချက် (rate limit) ထိနေပါသည်။ အကောင့်ဖွင့်ခြင်း အောင်မြင်ပြီဟု မယူဆပါနှင့်။ ခဏစောင့်ပြီးမှ တစ်ကြိမ်သာ ပြန်စမ်းပါ။';
+    } else if(normalized.includes('already registered') || normalized.includes('user already exists')){
+      errBox.textContent = 'ဤ email ဖြင့် အကောင့်ရှိပြီးသားပါ။ Sign in ဖြင့် ဝင်ရောက်ပါ။';
+    } else {
+      errBox.textContent = authError;
+    }
+    errBox.style.color = 'var(--danger)'; errBox.style.display = 'block';
+  }
   finally{ submitBtn.disabled = false; submitBtn.textContent = authMode==='signup' ? 'အကောင့်ဖွင့်ရန်' : 'ဝင်ရောက်ရန်'; }
 });
 document.getElementById('logout-btn').addEventListener('click', async ()=>{
