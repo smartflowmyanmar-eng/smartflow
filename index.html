@@ -943,7 +943,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
   submitBtn.disabled = true; submitBtn.textContent = authMode==='signup' ? 'အကောင့်ဖွင့်နေသည်…' : 'ဝင်ရောက်နေသည်…';
   try{
     if(authMode==='signup'){
-      const data = await authRequest('signup', {method:'POST', body:JSON.stringify({email,password:pass,data:{full_name:fullName}})});
+      const data = await authRequest('signup', {method:'POST', body:JSON.stringify({email,password:pass,data:{full_name:fullName},options:{emailRedirectTo:'https://smartflowmyanmar-eng.github.io/smartflow/'}})});
       if(data.session){ await saveProfile(data.user, fullName); await openApp(data.session, fullName); }
       else { errBox.textContent = 'အကောင့်ဖွင့်ပြီးပါပြီ။ Email ထဲရှိ confirmation link ကို နှိပ်ပြီးနောက် ဝင်ရောက်ပါ။'; errBox.style.color = 'var(--ok)'; errBox.style.display = 'block'; setAuthMode('signin'); }
     } else {
