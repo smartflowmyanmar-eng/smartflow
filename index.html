@@ -642,13 +642,13 @@ async function apiGetOrders(){
 async function findOrCreateCustomer(name, channel){
   const existing = await supabaseFetch(`customers?select=id&name=eq.${encodeURIComponent(name)}&limit=1`);
   if(existing[0]?.id) return existing[0].id;
-  const created = await supabaseFetch('customers', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({name})});
+  const created = await supabaseFetch('customers', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({name, created_by:currentSession?.user?.id || null})});
   return created[0]?.id;
 }
 async function apiPost(action, payload={}){
   if(action==='createOrder'){
     const o = payload.order, customerId = await findOrCreateCustomer(o.customer, o.via);
-    return supabaseFetch('orders', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({order_number:`ORD-${Date.now().toString().slice(-6)}`, customer_id:customerId, channel:o.via, status:o.status, total_amount:o.amount, notes:o.items})});
+    return supabaseFetch('orders', {method:'POST', headers:{'Content-Type':'application/json','Prefer':'return=representation'}, body:JSON.stringify({order_number:`ORD-${Date.now().toString().slice(-6)}`, customer_id:customerId, channel:o.via, status:o.status, total_amount:o.amount, notes:o.items, created_by:currentSession?.user?.id || null})});
   }
   if(action==='updateOrder'){
     const o = payload.order;
