@@ -1,66 +1,58 @@
-# Custora — Design Direction
+# SmartFlow Myanmar — Design Direction
 
-## Three Directions Considered
+## Current Product Direction
 
-### Theme Name: Paper Ledger
-Very brief intro: A warm editorial CRM that feels like a carefully kept customer notebook, with paper surfaces, ink typography, and an understated terracotta signal. It makes customer care feel personal and organized.
-Probability: 0.03
+The product name is **SmartFlow Myanmar**. The interface is an admin-only bilingual customer and order console connected to Supabase. The redesign intentionally replaces the previous decorative dashboard with a focused operations workspace: fewer decorative charts, more actionable records, clear states, and real database-backed empty states.
 
-### Theme Name: Quiet Utility
-Very brief intro: A restrained monochrome operations tool with precise grids, compact tables, and a single human accent color. It prioritizes calm focus over visual noise.
-Probability: 0.07
-
-### Theme Name: Signal Garden
-Very brief intro: A soft organic interface where customer relationships are represented as connected pathways, using sage, clay, and ink. It adds warmth without becoming playful or decorative.
-Probability: 0.02
-
-## Chosen Approach: Paper Ledger
+## Chosen Approach: Night Operations Ledger
 
 ### Design Movement
-Contemporary Swiss editorial design crossed with analog archival stationery: strong typographic hierarchy, asymmetric composition, visible rhythm, and tactile surfaces that feel like a premium customer notebook rather than a generic SaaS dashboard.
+A restrained operations-console interpretation of editorial data design: midnight ink surfaces, structured record panels, compact mono metadata, and bright workflow signals. It is designed for an administrator who needs to see the next action quickly rather than browse a marketing dashboard.
 
 ### Core Principles
-1. Every screen should feel skimmable in three seconds, with one strong title, one primary action, and a clear data rhythm.
-2. Warmth comes from material, typography, and microcopy—not from decoration or excessive color.
-3. The interface should make customer care feel deliberate: keep context visible, reduce hidden states, and surface follow-up work.
-4. Use asymmetry and editorial alignment to create character while preserving operational clarity.
+1. Every screen should answer three questions quickly: what is happening, who needs attention, and what should happen next.
+2. Real Supabase records are the product surface; missing records must produce clear empty states rather than invented examples.
+3. Cyan marks workflow movement, green confirms progress, amber signals attention, and rose indicates risk or cancellation.
+4. Bilingual copy remains concise and legible, with English labels available for operational terms where Myanmar translation can become ambiguous.
 
 ### Color Philosophy
-Warm ivory is the page, ink navy is the trusted record, terracotta is the human signal for action, and sage is the quiet confirmation color. Terracotta is reserved for moments that deserve attention—add, follow up, selected states—so it remains ownable and meaningful. The palette should feel like paper, ink, and a well-used red pencil.
+Midnight navy reduces glare during long admin sessions and gives the data hierarchy room to breathe. Cyan is the ownable SmartFlow signal for connected workflow, green is reserved for completed or healthy states, amber is reserved for follow-up attention, and rose is reserved for destructive or cancelled states. No gradients are used as decoration; any glow is limited to subtle state emphasis.
 
 ### Layout Paradigm
-A left archival rail anchors navigation like a notebook spine. The main workspace uses a two-column editorial composition: a wide customer ledger and a narrower follow-up column. Detail surfaces slide in from the right rather than replacing context, keeping the customer list visible as a source of orientation.
+A persistent left workspace rail anchors navigation. The main area is a wide operational canvas with a sticky utility header, asymmetric analytics panels, workflow progression, searchable tables, and right-side customer detail drawers. The overview is a command center; Customers, Orders, and Follow-up Queue are focused task views.
 
 ### Signature Elements
-1. Archival index tabs and small registration marks around section headers.
-2. A terracotta “care line” that appears beside follow-up items and selected customer states.
-3. A subtle ruled-paper texture and monospaced metadata labels for dates, tags, and record IDs.
+1. A cyan connected-state indicator communicates live Supabase synchronization.
+2. Compact status badges and horizontal bars make workflow distribution scannable.
+3. Right-side customer drawers preserve list context while exposing contact details, notes, and activity history.
 
 ### Interaction Philosophy
-Interactions should feel like handling a physical record: selection is immediate and visible, edits happen close to the data, and destructive actions require a clear pause. Every save should produce a short, quiet confirmation. Search and filters should feel like narrowing a filing cabinet, not opening a new page.
+Navigation should be immediate and low-friction. Search and status filters narrow records in place. Editing happens in a modal close to the relevant workflow, while archive and future integrations provide an explicit notice until their confirmation rules are implemented. Every successful database mutation produces a concise toast.
 
 ### Animation
-Use 160–220ms ease-out transitions for hover, selection, and filter changes. Use a 260ms right-to-left drawer entrance for customer detail. Stagger dashboard cards by 40ms on first entry. Never animate keyboard-triggered actions or essential state changes. Respect `prefers-reduced-motion` by removing non-essential transforms.
+Use 160–240ms ease-out transitions for navigation, table hover, drawer entrance, and modal entrance. Keep loading and synchronization states visible but restrained. Never animate data values excessively. Respect prefers-reduced-motion.
 
 ### Typography System
-Use Fraunces for display headlines and section titles, DM Sans for body/UI text, and IBM Plex Mono for metadata, tags, timestamps, and customer IDs. Headlines should be compact and slightly expressive; body copy should remain highly legible. Use sentence case rather than all-caps except for tiny metadata labels.
+Use Space Grotesk for headings, DM Sans for UI and body copy, IBM Plex Mono for labels, counts, IDs, and timestamps, and Noto Sans Myanmar for Myanmar text. Headlines are compact and operational; body copy is short enough for scanning.
 
 ### Brand Essence
-Custora is a calm customer notebook for solo operators who want every relationship to stay visible, remembered, and actionable. Personality: **observant, warm, exacting**.
+SmartFlow Myanmar is a private admin workspace for keeping customer conversations, orders, and follow-ups moving in one place. Personality: **focused, dependable, connected**.
 
 ### Brand Voice
-Headlines sound like a thoughtful colleague; CTAs are direct and human; microcopy explains what happens next without jargon.
-Example lines: “Keep the people behind the pipeline in view.” / “Add a customer while the context is fresh.”
+Headlines are direct and action-oriented. CTAs name the operation instead of using generic filler. Microcopy explains whether data is loading, missing, or connected.
+
+Example lines: “A clear view of every customer move.” / “Move every order forward.”
 
 ### Wordmark & Logo
-The mark is a pair of offset archival tabs forming an interlocking connection motif. The wordmark uses a custom-feeling serif display treatment with a slight optical gap between “cus” and “tora” to echo an index tab. Never render the brand as a default system wordmark.
+Use the supplied SmartFlow Myanmar logo in the auth gate and persistent sidebar. The wordmark must not be replaced with a default text-only brand treatment.
 
 ### Signature Brand Color
-Terracotta Signal — `#C7654A`, a warm clay red that feels like a human annotation in an otherwise quiet record.
+SmartFlow Cyan — `#09C8ED`, used for active navigation, connected-state indicators, workflow movement, and the primary action.
 
 ## Style Decisions
 
-- Use warm ivory backgrounds, ink navy text, terracotta actions, and sage confirmations.
-- Prefer editorial asymmetry over generic centered dashboard grids.
-- Use generated Custora mark and abstract archive artwork as the visual identity; keep product screens data-first.
-- Avoid purple gradients, excessive rounded cards, and generic Inter-first styling.
+- Keep SmartFlow Myanmar branding; do not substitute the legacy Custora name or logo.
+- Prefer dark, low-glare admin surfaces over decorative marketing layouts.
+- Remove fabricated demo customer/order/activity records from the UI.
+- Keep Overview concise; use dedicated Customers, Orders, and Follow-up Queue views for detailed work.
+- Treat Supabase errors, empty tables, and loading states as first-class product states.
