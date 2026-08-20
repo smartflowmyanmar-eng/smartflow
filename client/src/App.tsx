@@ -1,7 +1,7 @@
 // SmartFlow Myanmar design reminder: Paper Ledger direction — warm ivory, ink navy, terracotta signal, editorial sidebar, tactile but data-first.
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Toaster, toast } from "sonner";
-import { Search, Plus, Users, UserRound, Archive, PanelLeft, X, Pencil, MoreHorizontal, CalendarDays, Tag, StickyNote, Activity, ChevronRight, SlidersHorizontal, LogOut, Check, Sparkles } from "lucide-react";
+import { Search, Plus, Users, UserRound, Archive, PanelLeft, X, Pencil, MoreHorizontal, CalendarDays, Tag, StickyNote, Activity, ChevronRight, SlidersHorizontal, LogOut, Check, Sparkles, Mail, LockKeyhole, LoaderCircle } from "lucide-react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import "./index.css";
 
@@ -34,7 +34,7 @@ const statusMeta: Record<Status, { label: string; color: string; bg: string }> =
   archived: { label: "Archived", color: "#8B5E55", bg: "#F5E8E4" },
 };
 
-function App() {
+function DashboardApp({ onSignOut }: { onSignOut: () => Promise<void> }) {
   const [customers, setCustomers] = useState<Customer[]>(demoCustomers);
   const [activities, setActivities] = useState<ActivityItem[]>(demoActivities);
   const [selected, setSelected] = useState<Customer | null>(demoCustomers[0]);
@@ -103,7 +103,7 @@ function App() {
       </nav>
       <div className="nav-label nav-label-lower">{t("Library", "စာကြည့်တိုက်")}</div>
       <nav><button className="nav-item muted" onClick={() => toast.info("Tag management will be available in the next pass.")}><Tag size={17} /> {t("Tags", "တံဆိပ်များ")}</button><button className="nav-item muted" onClick={() => toast.info("Export is planned for the next pass.")}><Archive size={17} /> {t("Archive", "သိမ်းဆည်းထားသည်များ")}</button></nav>
-      <div className="sidebar-foot"><div className="profile-avatar">M</div><div><strong>Myo Khaing</strong><span>Administrator</span></div><button className="icon-ghost" aria-label="Log out" onClick={() => toast.info("Connect Supabase Auth to enable logout.")}><LogOut size={16} /></button></div>
+      <div className="sidebar-foot"><div className="profile-avatar">M</div><div><strong>Myo Khaing</strong><span>Administrator</span></div><button className="icon-ghost" aria-label="Log out" onClick={() => void onSignOut()}><LogOut size={16} /></button></div>
     </aside>
     <div className="mobile-scrim" onClick={() => setDrawerOpen(false)} />
     <main className="main-content">
@@ -117,6 +117,48 @@ function App() {
     {selected && drawerOpen && <CustomerDrawer customer={selected} activities={activities.filter(a => a.customer_id === selected.id)} onClose={() => setDrawerOpen(false)} onEdit={() => openEdit(selected)} onArchive={() => archiveCustomer(selected)} onAddActivity={addActivity} />}
     {showForm && <CustomerForm initial={editing} onClose={() => setShowForm(false)} onSave={saveCustomer} />}
   </div>;
+}
+
+function App() { return <AuthGate />; }
+
+function AuthGate() {
+  const [session, setSession] = useState<import("@supabase/supabase-js").Session | null>(null);
+  const [checking, setChecking] = useState(Boolean(supabase));
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [language, setLanguage] = useState<"en" | "my">(() => (localStorage.getItem("smartflow-language") as "en" | "my") || "en");
+  const [errorMessage, setErrorMessage] = useState("");
+  const t = (en: string, my: string) => language === "my" ? my : en;
+
+  useEffect(() => {
+    if (!supabase) { setChecking(false); return; }
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => { if (mounted) { setSession(data.session); setChecking(false); } });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => { if (mounted) setSession(nextSession); });
+    return () => { mounted = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  async function signIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase) { setErrorMessage(t("Supabase is not configured in this build.", "ဤ build တွင် Supabase မသတ်မှတ်ရသေးပါ။")); return; }
+    setSubmitting(true); setErrorMessage("");
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      const message = error.message.toLowerCase().includes("fetch") ? t("Supabase could not be reached. Check the deployment environment variables.", "Supabase server သို့ မရောက်နိုင်ပါ။ deployment environment variables များကို စစ်ဆေးပါ။") : error.message;
+      setErrorMessage(message);
+    }
+    setSubmitting(false);
+  }
+
+  async function signOut() { if (supabase) await supabase.auth.signOut(); setSession(null); }
+  function toggleLanguage() { const next = language === "en" ? "my" : "en"; setLanguage(next); localStorage.setItem("smartflow-language", next); }
+
+  if (!supabase) return <div className="auth-shell"><div className="auth-card"><img src="/manus-storage/smartflow-myanmar-logo_9b099b42.png" alt="SmartFlow Myanmar logo" /><p className="eyebrow">Configuration required</p><h1>{t("Connect the ledger before signing in.", "ဝင်ရောက်မီ ledger ကို ချိတ်ဆက်ပါ။")}</h1><p>{t("This deployment was built without the Supabase URL and publishable key. Add the two VITE_SUPABASE secrets in GitHub, then redeploy.", "ဤ deployment ကို Supabase URL နှင့် publishable key မပါဘဲ build လုပ်ထားပါသည်။ GitHub တွင် VITE_SUPABASE secret နှစ်ခုထည့်ပြီး ပြန် deploy လုပ်ပါ။")}</p></div></div>;
+  if (checking) return <div className="auth-shell"><div className="auth-card auth-loading"><LoaderCircle className="spin" size={22} /> {t("Checking your admin session…", "Admin session ကို စစ်ဆေးနေပါသည်…")}</div></div>;
+  if (session) return <DashboardApp onSignOut={signOut} />;
+
+  return <div className="auth-shell"><div className="auth-card"><div className="auth-brand"><img src="/manus-storage/smartflow-myanmar-logo_9b099b42.png" alt="SmartFlow Myanmar logo" /><div><strong>SmartFlow</strong><span>Myanmar · admin ledger</span></div><button className="language-switcher" onClick={toggleLanguage}>{language === "en" ? "မြန်မာ" : "English"}</button></div><p className="eyebrow">{t("Private workspace", "သီးသန့်လုပ်ငန်းခွင်")}</p><h1>{t("The customer ledger, kept close.", "ဖောက်သည်မှတ်တမ်းကို လုံခြုံစွာ စီမံပါ။")}</h1><p className="auth-copy">{t("Sign in with the Supabase Admin account to manage customers, activities, and follow-ups.", "ဖောက်သည်များ၊ လုပ်ဆောင်ချက်များနှင့် နောက်ဆက်တွဲများကို စီမံရန် Supabase Admin account ဖြင့် ဝင်ရောက်ပါ။")}</p><form onSubmit={signIn} className="auth-form"><label><span>{t("Admin email", "Admin အီးမေးလ်")}</span><div className="auth-input"><Mail size={16} /><input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@example.com" /></div></label><label><span>{t("Password", "စကားဝှက်")}</span><div className="auth-input"><LockKeyhole size={16} /><input type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" /></div></label>{errorMessage && <div className="auth-error" role="alert">{errorMessage}</div>}<button className="button-primary auth-submit" disabled={submitting}>{submitting ? <><LoaderCircle className="spin" size={16} /> {t("Signing in…", "ဝင်ရောက်နေပါသည်…")}</> : t("Sign in as administrator", "Administrator အဖြစ် ဝင်ရောက်ရန်")}</button></form><p className="auth-footnote">{t("Admin access only · SmartFlow Myanmar", "Admin သီးသန့် · SmartFlow Myanmar")}</p></div></div>;
 }
 
 function Stat({ label, value, note, icon, accent = "navy" }: { label: string; value: number; note: string; icon: ReactNode; accent?: string }) { return <div className={`stat-card ${accent}`}><div className="stat-icon">{icon}</div><p>{label}</p><strong>{value}</strong><span>{note}</span></div>; }

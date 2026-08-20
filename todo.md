@@ -1,3 +1,11 @@
+# SmartFlow Myanmar Supabase login debugging
+
+- [ ] Deployed build တွင် Supabase URL/key wiring ကို စစ်ဆေးရန်
+- [ ] GitHub Actions workflow secret mapping နှင့် Vite build env ကို စစ်ဆေးရန်
+- [ ] Supabase URL configuration၊ Auth provider နှင့် redirect settings ကို စစ်ဆေးရန်
+- [ ] Fix push/rebuild ပြီး live login flow ကို စမ်းသပ်ရန်
+- [ ] Login ပြဿနာဖြေရှင်းချက်နှင့် လိုအပ်သော user action ကို handoff ပြုလုပ်ရန်
+
 # SmartFlow Myanmar GitHub repository upload
 
 - [ ] `smartflowmyanmar-eng/smartflow` repository target ကို သတ်မှတ်ရန်
