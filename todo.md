@@ -1,3 +1,55 @@
+# SmartFlow Myanmar authentication gate QA
+
+- [ ] Verify whether an existing Supabase session is causing dashboard auto-entry
+- [ ] Verify logout clears the client session and redirects to sign-in
+- [ ] Verify a fresh browser load without a session shows sign-in first
+- [ ] Verify authorized login transitions from sign-in to dashboard
+- [ ] Fix auth gate only if fresh-session behavior is incorrect
+
+# SmartFlow Myanmar admin allowlist update
+
+- [x] Resolve the now-visible Supabase Auth user ID for `moykhine060@gmail.com` — UID `ff58ee6d-4ba8-40c0-a785-6be4e31b84bf` verified from Supabase Dashboard
+- [ ] Insert the verified user ID into `public.admin_users` without duplicates
+- [ ] Verify the allowlist row with a read-only query
+- [ ] Recheck live Preview authorization after the user signs in again
+
+# SmartFlow Myanmar remediation: invalid QA cleanup, email validation, production RLS test
+
+- [ ] Confirm the invalid QA customer ID and exact identifying fields before deletion
+- [ ] Delete only the invalid QA customer record and verify it is gone
+- [ ] Add explicit email-format validation to the customer save handler
+- [ ] Run TypeScript and production build checks
+- [ ] Push and deploy the validation fix
+- [ ] Extract the exact production public key from the deployed build without exposing it
+- [ ] Run unauthenticated and authenticated RLS endpoint probes with safe read-only queries
+- [ ] Record final remediation and security-test results
+
+# SmartFlow Myanmar UI/Export/API security QA
+
+- [ ] Test required-field and invalid-format validation on customer and follow-up forms
+- [ ] Test safe error feedback for failed/blocked operations without exposing secrets
+- [ ] Test customer CSV export download, filename, headers, escaping, and row contents
+- [ ] Check whether Excel export is implemented or clearly communicated as unavailable
+- [ ] Verify unauthenticated API/database reads are blocked by RLS
+- [ ] Verify authenticated non-admin access is blocked by admin authorization policies
+- [ ] Inspect frontend/API configuration for exposed private credentials or unsafe endpoints
+- [ ] Record findings and recommended fixes without mutating production data
+
+# SmartFlow Myanmar Live QA: authentication and persistence
+
+- [x] Verify admin login with the authorized Supabase account
+- [x] Verify logout clears the session and returns to the sign-in screen
+- [x] Create one QA customer through the live UI
+- [x] Create one QA follow-up linked to that customer through the live UI
+- [x] Verify both records exist in Supabase with the expected fields
+- [ ] Report whether QA records should be retained or deleted
+
+# SmartFlow Myanmar Live configuration repair
+
+- [ ] Verify GitHub repository secrets are available to the Pages workflow and production build
+- [ ] Redeploy after correcting `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- [ ] Confirm live site reaches the Supabase admin login instead of configuration-required screen
+
 # SmartFlow Myanmar Supabase login debugging
 
 - [x] Deployed build တွင် Supabase URL/key wiring ကို စစ်ဆေးရန် — build သည် variables မပါသော configuration-required screen ကို ပြနေသည်
@@ -84,3 +136,20 @@
 - [ ] Function owner/search_path/grants နှင့် dependent RLS policies ကို ပြင်ရန်
 - [ ] Live UI မှ QA customer save ကို ပြန်စမ်းပြီး Supabase persistence verify လုပ်ရန်
 - [ ] Orders နှင့် follow-ups UI flow ကို ဆက်စမ်းရန်
+
+## 3D Cinematic Modern-Tech Redesign
+
+- [x] Prepare the supplied SmartFlow logo for the new brand treatment and favicon usage.
+- [x] Generate and upload restrained cinematic background/accent assets without replacing real CRM data.
+- [x] Rework global design tokens in `client/src/index.css` for blue-black layered surfaces, SmartFlow Signal Cyan, cinematic lighting, and accessible bilingual contrast.
+- [x] Redesign the auth gate, command rail, utility header, KPI slabs, workflow panels, data tables, drawers, dialogs, and mobile layout while preserving existing behavior.
+- [x] Add file-level style reminders to edited CSS/component/page files.
+- [x] Run TypeScript check and production build.
+- [x] Verify sign-in gate, language switch, Supabase loading/error/empty states, and responsive rendering in Preview; existing Supabase CRUD paths remain in the unchanged application logic.
+- [x] Capture representative Preview screenshots; checkpoint and GitHub Pages sync remain as the final delivery step.
+
+## Current Redesign Notes
+
+- Chosen visual direction: Night Operations Ledger, interpreted as 3D cinematic modern-tech.
+- Signature color: SmartFlow Signal Cyan `#12B8F4`.
+- Do not add fabricated customers, orders, follow-ups, reviews, ratings, or testimonials.
