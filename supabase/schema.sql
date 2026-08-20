@@ -56,6 +56,8 @@ create index if not exists activities_activity_at_idx on public.activities(activ
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
+security invoker
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -78,6 +80,10 @@ as $$
   select exists (select 1 from public.admin_users where user_id = auth.uid());
 $$;
 
+-- The function is used internally by RLS policies, not as a public RPC endpoint.
+revoke execute on function public.is_smartflow_admin() from public, anon, authenticated;
+revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+
 alter table public.admin_users enable row level security;
 alter table public.customers enable row level security;
 alter table public.orders enable row level security;
@@ -97,3 +103,47 @@ create policy "Admins can manage activities" on public.activities for all to aut
 
 -- After creating the Admin user in Supabase Auth, grant that exact user access:
 -- insert into public.admin_users (user_id) values ('PASTE_AUTH_USER_UUID_HERE');
+
+
+-- Additive CRM extension: follow-up queue and order line items.
+-- Safe to run after the base schema; all policies are Admin-only.
+create table if not exists public.follow_ups (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references public.customers(id) on delete cascade,
+  order_id uuid references public.orders(id) on delete set null,
+  title text not null,
+  note text not null default '',
+  due_at timestamptz not null,
+  status text not null default 'pending' check (status in ('pending','completed','snoozed','cancelled')),
+  priority text not null default 'normal' check (priority in ('low','normal','high','urgent')),
+  assigned_to uuid references auth.users(id) on delete set null,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  product_name text not null,
+  quantity integer not null default 1 check (quantity > 0),
+  unit_price numeric(14,2) not null default 0 check (unit_price >= 0),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists follow_ups_customer_idx on public.follow_ups(customer_id);
+create index if not exists follow_ups_due_status_idx on public.follow_ups(status, due_at);
+create index if not exists follow_ups_assigned_to_idx on public.follow_ups(assigned_to);
+create index if not exists order_items_order_idx on public.order_items(order_id);
+
+drop trigger if exists follow_ups_touch_updated_at on public.follow_ups;
+create trigger follow_ups_touch_updated_at before update on public.follow_ups for each row execute function public.touch_updated_at();
+
+alter table public.follow_ups enable row level security;
+alter table public.order_items enable row level security;
+
+drop policy if exists "Admins can manage follow ups" on public.follow_ups;
+create policy "Admins can manage follow ups" on public.follow_ups for all to authenticated using (public.is_smartflow_admin()) with check (public.is_smartflow_admin());
+
+drop policy if exists "Admins can manage order items" on public.order_items;
+create policy "Admins can manage order items" on public.order_items for all to authenticated using (public.is_smartflow_admin()) with check (public.is_smartflow_admin());
