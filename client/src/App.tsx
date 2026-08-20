@@ -26,7 +26,7 @@ type View = "overview" | "customers" | "orders" | "followups";
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || "https://wkahfwfpmifcdxycajtu.supabase.co";
 const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || "sb_publishable_U-UKVWvtUpuviVWFfhjiNw_cv5KMIeT";
 const supabase: SupabaseClient | null = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false } }) : null;
-const logo = "/manus-storage/smartflow-logo_dbaf45d4.png";
+const logo = `${import.meta.env.BASE_URL}smartflow-logo.png`;
 
 const statusMeta: Record<Status, { en: string; my: string; tone: string }> = {
   lead: { en: "Lead", my: "စောင့်ကြည့်ရန်", tone: "amber" },
