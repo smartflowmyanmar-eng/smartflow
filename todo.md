@@ -153,3 +153,46 @@
 - Chosen visual direction: Night Operations Ledger, interpreted as 3D cinematic modern-tech.
 - Signature color: SmartFlow Signal Cyan `#12B8F4`.
 - Do not add fabricated customers, orders, follow-ups, reviews, ratings, or testimonials.
+
+## Live Logo Repair
+
+- [x] Diagnose why `/manus-storage/...` logo URL fails on GitHub Pages: the legacy Pages root served that path as a 404.
+- [x] Move the supplied logo into a GitHub Pages-safe tracked public asset path without exposing secrets.
+- [x] Update all logo, favicon, and cinematic background references to relative tracked assets.
+- [x] Run TypeScript and production build checks.
+- [x] Push commits `216ebf7` and `008fc72` to GitHub; Pages workflow completed successfully and live logo/background assets return HTTP 200.
+- [ ] Save a repair checkpoint and report the live URL status.
+
+## Live Blank Screen Repair
+
+- [x] Capture the live HTML/JS/CSS asset references and identify the runtime failure: the legacy root artifact used `/assets/...` absolute paths on a project-site URL.
+- [x] Inspect browser/network evidence and Vite base/deployment output.
+- [x] Repair the artifact by rebuilding with `GITHUB_ACTIONS=true`, producing project-relative JS/CSS paths without regressing the logo fix.
+- [x] Run TypeScript and production build checks.
+- [x] Redeploy GitHub Pages from commit `924cc19`; workflow completed successfully and live JS/CSS assets return HTTP 200.
+- [ ] Save a repair checkpoint and report the fix.
+
+## Phone Shop Management Upgrade
+
+- [x] Define phone-shop vocabulary and workflows: products/SKUs, IMEI, stock movement, sales, payments, warranty, repairs, suppliers, expenses, and low-stock alerts.
+- [x] Map phone-shop tables/RLS requirements and apply the non-destructive products/repairs migration to the connected Supabase project without fabricating production data.
+- [ ] Replace the CRM-first overview with a visibly phone-shop-first home screen.
+- [ ] Make POS Sale, Stock/IMEI, Warranty & Repairs, Suppliers, and Expenses first-class navigation items.
+- [ ] Add clearly visible phone-shop quick actions, recent sales, low-stock alerts, repair due list, and gross-profit placeholders based only on real data.
+- [ ] Add bilingual English/Myanmar labels for the new phone-shop screens and preserve admin-only access.
+- [ ] Implement inventory/product management with IMEI-aware stock records, condition, warranty, supplier, and stock-status filters.
+- [ ] Implement a phone-sale form with product/customer linkage, quantity, payment status, discount, cost, and profit fields.
+- [ ] Implement warranty/repair follow-up tracking and supplier/expense summaries.
+- [ ] Add empty, loading, validation, permission, and error states for every new workflow.
+- [ ] Run TypeScript/build checks and verify visible changes at desktop and mobile widths.
+- [ ] Save a visibly changed checkpoint and sync the phone-shop-first UI to GitHub Pages.
+
+## Preview Auth and Live Version Repair
+
+- [ ] Compare Preview source/version against the latest active project checkpoint and live GitHub Pages artifact.
+- [ ] Diagnose why Preview login fails while Chrome can authenticate.
+- [ ] Verify Supabase URL/key fallback, session persistence, admin allowlist check, and browser console/network errors.
+- [ ] Ensure the phone-shop-first build is copied into the Pages root artifact and deployed from the latest source.
+- [ ] Verify Preview login gate and authenticated phone-shop dashboard after the repair.
+- [ ] Verify live GitHub Pages cache-busted URL shows the phone-shop-first dashboard.
+- [ ] Save a checkpoint and report the exact environment status and any user action still required.

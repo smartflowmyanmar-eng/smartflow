@@ -147,3 +147,55 @@ create policy "Admins can manage follow ups" on public.follow_ups for all to aut
 
 drop policy if exists "Admins can manage order items" on public.order_items;
 create policy "Admins can manage order items" on public.order_items for all to authenticated using (public.is_smartflow_admin()) with check (public.is_smartflow_admin());
+
+-- Phone shop extension: inventory catalog and repair/warranty queue.
+create table if not exists public.products (
+  id uuid primary key default gen_random_uuid(),
+  sku text not null unique,
+  brand text not null,
+  model text not null,
+  storage text not null default '',
+  color text not null default '',
+  condition text not null default 'new' check (condition in ('new','used','refurbished')),
+  imei text not null default '',
+  cost_price numeric(14,2) not null default 0 check (cost_price >= 0),
+  selling_price numeric(14,2) not null default 0 check (selling_price >= 0),
+  quantity integer not null default 0 check (quantity >= 0),
+  reorder_level integer not null default 1 check (reorder_level >= 0),
+  warranty_months integer not null default 12 check (warranty_months >= 0),
+  supplier_name text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.repairs (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references public.customers(id) on delete cascade,
+  device_name text not null,
+  imei text not null default '',
+  issue text not null,
+  status text not null default 'received' check (status in ('received','diagnosing','repairing','ready','collected')),
+  estimated_cost numeric(14,2) not null default 0 check (estimated_cost >= 0),
+  due_at timestamptz,
+  notes text not null default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists products_brand_model_idx on public.products(brand, model);
+create index if not exists products_quantity_idx on public.products(quantity, reorder_level);
+create index if not exists repairs_status_due_idx on public.repairs(status, due_at);
+create index if not exists repairs_customer_idx on public.repairs(customer_id);
+
+drop trigger if exists products_touch_updated_at on public.products;
+create trigger products_touch_updated_at before update on public.products for each row execute function public.touch_updated_at();
+drop trigger if exists repairs_touch_updated_at on public.repairs;
+create trigger repairs_touch_updated_at before update on public.repairs for each row execute function public.touch_updated_at();
+
+alter table public.products enable row level security;
+alter table public.repairs enable row level security;
+
+drop policy if exists "Admins can manage products" on public.products;
+create policy "Admins can manage products" on public.products for all to authenticated using (public.is_smartflow_admin()) with check (public.is_smartflow_admin());
+drop policy if exists "Admins can manage repairs" on public.repairs;
+create policy "Admins can manage repairs" on public.repairs for all to authenticated using (public.is_smartflow_admin()) with check (public.is_smartflow_admin());

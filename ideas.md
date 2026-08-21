@@ -66,6 +66,24 @@ Use the supplied SmartFlow Myanmar logo in the auth gate and persistent command 
 ### Asset Plan
 Use the supplied logo as the only primary brand asset. Prepare a transparent logo treatment for the header and favicon where possible. Generate a small set of non-repeating cinematic abstract assets: one low-key signal-horizon background, one abstract glass-orbit accent, and one dark operational texture. These support the auth gate and dashboard atmosphere without competing with data clarity.
 
+## Phone Shop Management Expansion
+
+### Business vocabulary
+
+The CRM will use phone-shop terms rather than generic sales terms: **Devices**, **IMEI/SKU**, **stock on hand**, **stock movement**, **sales**, **payments**, **gross margin**, **warranty**, **repairs**, **suppliers**, **expenses**, and **follow-ups**. Existing customers, orders, activities, and follow-ups remain the source of truth for already deployed workflows.
+
+### Core workflows
+
+1. **Dashboard:** revenue today, units sold, low-stock devices, pending payments, warranty/repair queue, and a compact sales trend.
+2. **Inventory:** product catalog with brand, model, storage, color, condition, cost price, selling price, quantity, reorder threshold, and optional IMEI-specific units.
+3. **Sales:** customer-linked sale with one or more devices, payment method/status, discount, delivery status, profit estimate, and receipt-ready detail.
+4. **Warranty & Repairs:** warranty end date, repair intake, issue, status, technician/note, customer contact, and reminder date.
+5. **Suppliers & Expenses:** supplier contacts, purchase references, expense categories, amount, date, and notes.
+
+### UI direction
+
+Use the supplied reference as a **mobile-dashboard composition reference**, not as a pixel-for-pixel clone: compact top utility bar, persistent side rail on desktop, bottom navigation/quick actions on mobile, card-based KPI hierarchy, restrained white/soft-gray content surfaces, and cobalt/cyan SmartFlow signal accents. Keep the existing cinematic navy authentication gate, then make the authenticated shop console cleaner and more operationally dense than the login screen. Avoid fabricated inventory, sales, reviews, ratings, or testimonials; empty states must clearly say when Supabase data has not been added.
+
 ## Style Decisions
 
 - Keep SmartFlow Myanmar branding and the supplied logo; do not substitute the legacy Custora name or logo.
