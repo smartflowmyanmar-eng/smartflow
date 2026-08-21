@@ -71,17 +71,43 @@ function AuthGate() {
     return () => { mounted = false; data.subscription.unsubscribe(); };
   }, []);
   async function signIn(event: React.FormEvent) {
-    event.preventDefault(); if (!supabase) return; setSubmitting(true); setError("");
-    const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (authError) setError(authError.message.toLowerCase().includes("fetch") ? t("Supabase could not be reached. Check GitHub Actions secrets.", "Supabase server သို့ မရောက်နိုင်ပါ။ GitHub Actions secrets ကို စစ်ဆေးပါ။") : authError.message);
-    setSubmitting(false);
+    event.preventDefault();
+    if (!supabase || submitting) return;
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail || !password) {
+      setError(t("Enter both your admin email and password.", "Admin အီးမေးလ်နှင့် စကားဝှက် နှစ်ခုလုံး ထည့်ပါ။"));
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+      if (authError) {
+        const message = authError.message.toLowerCase();
+        if (message.includes("invalid login credentials") || message.includes("invalid credentials")) {
+          setError(t("Email or password is incorrect. Check your details and try again.", "အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ပါ။ ပြန်စစ်ပြီး ထပ်မံဝင်ရောက်ပါ။"));
+        } else if (message.includes("email not confirmed")) {
+          setError(t("Confirm your email address before signing in.", "Login မဝင်မီ သင့်အီးမေးလ်ကို အတည်ပြုပါ။"));
+        } else if (message.includes("fetch") || message.includes("network") || message.includes("timeout")) {
+          setError(t("Supabase could not be reached. Check your connection and try again.", "Supabase server သို့ မရောက်နိုင်ပါ။ အင်တာနက်ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်မံကြိုးစားပါ။"));
+        } else if (message.includes("rate limit") || message.includes("too many")) {
+          setError(t("Too many attempts. Wait a moment before trying again.", "ဝင်ရောက်ရန် ကြိုးစားမှုများလွန်းပါသည်။ ခဏစောင့်ပြီး ထပ်မံကြိုးစားပါ။"));
+        } else {
+          setError(t("Sign-in failed. Please try again or contact the workspace owner.", "Login မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ သို့မဟုတ် workspace owner ကို ဆက်သွယ်ပါ။"));
+        }
+      }
+    } catch {
+      setError(t("Something went wrong while signing in. Check your connection and try again.", "Login ပြုလုပ်ရာတွင် ပြဿနာရှိပါသည်။ ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်မံကြိုးစားပါ။"));
+    } finally {
+      setSubmitting(false);
+    }
   }
   async function signOut() { if (supabase) await supabase.auth.signOut(); setSession(null); }
   if (!supabase) return <AuthMessage language={language} />;
   if (checking) return <div className="auth-screen"><div className="auth-loading"><LoaderCircle className="spin" /> {t("Checking admin session…", "Admin session ကို စစ်ဆေးနေပါသည်…")}</div></div>;
   if (adminDenied) return <div className="auth-screen"><div className="auth-panel"><img className="auth-logo" src={logo} alt="SmartFlow Myanmar" /><span className="kicker">ADMIN ACCESS ONLY</span><h1>{t("This account is not on the admin list.", "ဤ account သည် Admin စာရင်းတွင် မပါဝင်ပါ။")}</h1><p>{t("Ask the workspace owner to add your Supabase Auth user ID to public.admin_users, then sign in again.", "Supabase Auth user ID ကို public.admin_users ထဲသို့ ထည့်ပေးရန် workspace owner ကို ပြောပြီး ပြန်ဝင်ပါ။")}</p><button className="secondary-button" onClick={() => void signOut()}><LogOut size={15} />{t("Use another account", "အခြား account သုံးရန်")}</button></div></div>;
   if (session) return <Dashboard session={session} onSignOut={signOut} />;
-  return <div className="auth-screen"><form className="auth-panel" onSubmit={signIn}><div className="auth-brand"><div className="auth-brand-mark"><img src={logo} alt="SmartFlow Myanmar" /></div><div className="auth-brand-copy"><strong>SmartFlow Myanmar</strong><span>OPERATIONS CONSOLE</span></div><button type="button" className="lang-toggle" onClick={() => setLanguage(language === "en" ? "my" : "en")}>{language === "en" ? "မြန်မာ" : "English"}</button></div><div className="auth-orbit-label"><span className="signal-line" /> SMARTFLOW / PRIVATE ADMIN WORKSPACE</div><h1>{t("Keep every customer move visible.", "ဖောက်သည်တိုင်း၏ လုပ်ဆောင်ချက်ကို တစ်နေရာတည်းတွင် စောင့်ကြည့်ပါ။")}</h1><p>{t("A focused command center for customer context, order progress, and the next follow-up.", "ဖောက်သည်အချက်အလက်၊ order တိုးတက်မှုနှင့် နောက်ဆက်တွဲလုပ်ဆောင်ချက်များကို စီမံရန် အာရုံစိုက်ထားသော workspace ဖြစ်ပါသည်။")}</p><div className="auth-signal"><span><i className="connected-dot" /> {t("SECURE ADMIN ACCESS", "လုံခြုံသော ADMIN ဝင်ခွင့်")}</span><span>{t("SUPABASE / READY", "SUPABASE / အသင့်")}</span></div><label>{t("Admin email", "Admin အီးမေးလ်")}<div className="input-wrap"><Mail size={16} /><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@example.com" /></div></label><label>{t("Password", "စကားဝှက်")}<div className="input-wrap"><span className="input-lock">••</span><input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div></label>{error && <div className="error-banner">{error}</div>}<button className="primary-button auth-button" disabled={submitting}>{submitting ? <LoaderCircle className="spin" size={16} /> : <Zap size={16} />}{t("Enter admin console", "Admin console သို့ ဝင်ရန်")}</button><small>{t("Admin access only · SmartFlow Myanmar", "Admin သီးသန့် · SmartFlow Myanmar")}</small></form></div>;
+  return <div className="auth-screen"><form className="auth-panel" onSubmit={signIn}><div className="auth-brand"><div className="auth-brand-mark"><img src={logo} alt="SmartFlow Myanmar" /></div><div className="auth-brand-copy"><strong>SmartFlow Myanmar</strong><span>OPERATIONS CONSOLE</span></div><button type="button" className="lang-toggle" onClick={() => setLanguage(language === "en" ? "my" : "en")}>{language === "en" ? "မြန်မာ" : "English"}</button></div><div className="auth-orbit-label"><span className="signal-line" /> SMARTFLOW / PRIVATE ADMIN WORKSPACE</div><h1>{t("Keep every customer move visible.", "ဖောက်သည်တိုင်း၏ လုပ်ဆောင်ချက်ကို တစ်နေရာတည်းတွင် စောင့်ကြည့်ပါ။")}</h1><p>{t("A focused command center for customer context, order progress, and the next follow-up.", "ဖောက်သည်အချက်အလက်၊ order တိုးတက်မှုနှင့် နောက်ဆက်တွဲလုပ်ဆောင်ချက်များကို စီမံရန် အာရုံစိုက်ထားသော workspace ဖြစ်ပါသည်။")}</p><div className="auth-signal"><span><i className="connected-dot" /> {t("SECURE ADMIN ACCESS", "လုံခြုံသော ADMIN ဝင်ခွင့်")}</span><span>{t("SUPABASE / READY", "SUPABASE / အသင့်")}</span></div><label>{t("Admin email", "Admin အီးမေးလ်")}<div className="input-wrap"><Mail size={16} /><input required autoComplete="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (error) setError(""); }} placeholder="admin@example.com" /></div></label><label>{t("Password", "စကားဝှက်")}<div className="input-wrap"><span className="input-lock">••</span><input required autoComplete="current-password" type="password" value={password} onChange={(e) => { setPassword(e.target.value); if (error) setError(""); }} placeholder="••••••••" /></div></label>{error && <div className="error-banner" role="alert" aria-live="polite"><X size={15} /> <span>{error}</span></div>}<button className="primary-button auth-button" disabled={submitting} aria-busy={submitting}>{submitting ? <><LoaderCircle className="spin" size={16} />{t("Signing in…", "ဝင်ရောက်နေပါသည်…")}</> : <><Zap size={16} />{t("Enter admin console", "Admin console သို့ ဝင်ရန်")}</>}</button><small>{t("Admin access only · SmartFlow Myanmar", "Admin သီးသန့် · SmartFlow Myanmar")}</small></form></div>;
 }
 function AuthMessage({ language }: { language: "en" | "my" }) { return <div className="auth-screen"><div className="auth-panel"><img className="auth-logo" src={logo} alt="SmartFlow Myanmar" /><span className="kicker">CONFIGURATION REQUIRED</span><h1>{language === "my" ? "Supabase ကို ချိတ်ဆက်ပါ။" : "Connect Supabase before signing in."}</h1><p>{language === "my" ? "Preview environment တွင် public Supabase configuration မရရှိသေးပါ။ Project settings သို့မဟုတ် GitHub Actions တွင် VITE_SUPABASE_URL နှင့် VITE_SUPABASE_ANON_KEY ကို စစ်ဆေးပြီး redeploy လုပ်ပါ။" : "The Preview environment has no public Supabase configuration. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in project settings or GitHub Actions, then redeploy."}</p></div></div>; }
 function useLanguage(): ["en" | "my", (value: "en" | "my") => void] { const [language, set] = useState<"en" | "my">(() => (localStorage.getItem("smartflow-language") as "en" | "my") || "my"); return [language, (value) => { set(value); localStorage.setItem("smartflow-language", value); }]; }
